@@ -22,4 +22,8 @@ public class Interface {
 		return String.format("%s:\n%s", name, operationHolder);
 	}
 
+	public String name() {
+		return name;
+	}
+
 }

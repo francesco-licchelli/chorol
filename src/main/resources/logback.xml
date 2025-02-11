@@ -9,15 +9,8 @@
     </appender>
 
     <!-- Configurazione del logger root -->
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
     </root>
-
-    <!-- Configurazione specifica per un pacchetto (opzionale) -->
-    <!--
-        <logger name="it.unibo.tesi.chorol" level="INFO" additivity="false">
-            <appender-ref ref="CONSOLE" />
-        </logger>
-    -->
 
 </configuration>

@@ -2,53 +2,97 @@ package it.unibo.tesi.chorol.symbols;
 
 
 import it.unibo.tesi.chorol.symbols.interfaces.InterfaceHolder;
-import it.unibo.tesi.chorol.symbols.ports.PortHolder;
+import it.unibo.tesi.chorol.symbols.services.ServiceHolder;
 import it.unibo.tesi.chorol.symbols.types.TypeHolder;
-import it.unibo.tesi.chorol.utils.Misc;
-import jolie.lang.parse.ast.InputPortInfo;
-import jolie.lang.parse.ast.OutputPortInfo;
-import jolie.lang.parse.util.ProgramInspector;
-import jolie.lang.parse.util.impl.ProgramInspectorCreatorVisitor;
-import jolie.lang.parse.util.impl.ProgramInspectorImpl;
+import jolie.lang.parse.ast.InterfaceDefinition;
+import jolie.lang.parse.ast.Program;
+import jolie.lang.parse.ast.ServiceNode;
+import jolie.lang.parse.ast.types.TypeDefinition;
+import jolie.lang.parse.module.ModuleException;
+import jolie.lang.parse.module.ModuleFinderImpl;
+import jolie.lang.parse.module.SymbolTable;
+import jolie.lang.parse.module.SymbolTableGenerator;
+import jolie.lang.parse.module.exceptions.ModuleNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
-import static it.unibo.tesi.chorol.utils.Misc.getFilesPaths;
+import static it.unibo.tesi.chorol.utils.Misc.loadProgram;
 
 
 public class SymbolManager {
 	private static final Logger logger = LoggerFactory.getLogger(SymbolManager.class);
 	private final TypeHolder typeHolder = new TypeHolder();
 	private final InterfaceHolder interfaceHolder = new InterfaceHolder();
-	private final PortHolder<InputPortInfo> inputPortHolder = new PortHolder<>();
-	private final PortHolder<OutputPortInfo> outputPortHolder = new PortHolder<>();
+	private final ServiceHolder serviceHolder = new ServiceHolder();
 
 	public SymbolManager(Path root) {
-		getFilesPaths(root).stream()
-				.map(Misc::loadProgram)
-				.filter(Objects::nonNull)
-				.peek(program -> logger.info("Program loaded: {}", program.context().source().toString()))
-				.map(program ->
-						     (ProgramInspectorImpl) new ProgramInspectorCreatorVisitor(program).createInspector()
-				).forEach(this::loadInspectorSymbols);
+		loadSymbols(root);
+		serviceHolder.bindInterfaces(interfaceHolder);
 
-		inputPortHolder.bindInterfaces(interfaceHolder);
-		outputPortHolder.bindInterfaces(interfaceHolder);
 		logger.info("LOADED TYPES:\n{}\n{}", typeHolder.toString().trim(), "-".repeat(10));
 		logger.info("LOADED INTERFACES:\n{}\n{}", interfaceHolder.toString().trim(), "-".repeat(10));
-		logger.info("LOADED INPUT PORTS:\n{}\n{}", inputPortHolder.toString().trim(), "-".repeat(10));
-		logger.info("LOADED OUTPUT PORTS:\n{}\n{}", outputPortHolder.toString().trim(), "-".repeat(10));
+		logger.info("LOADED SERVICES:\n{}\n{}", serviceHolder.toString().trim(), "-".repeat(10));
 	}
 
-	private void loadInspectorSymbols(ProgramInspector inspector) {
-		Arrays.stream(inspector.getTypes()).forEach(typeHolder::add);
-		Arrays.stream(inspector.getInterfaces()).forEach(interfaceHolder::add);
-		Arrays.stream(inspector.getInputPorts()).forEach(inputPortHolder::add);
-		Arrays.stream(inspector.getOutputPorts()).forEach(outputPortHolder::add);
+	private void loadSymbols(Path source) {
+		loadSymbolsRec(source.toUri(), new HashSet<>());
+	}
+
+	private void loadSymbolsRec(URI source, Set<String> visited) {
+		if (visited.contains(source.toString())) {
+			return;
+		}
+		visited.add(source.toString());
+
+		Program program = loadProgram(source);
+		if (program == null) {
+			return;
+		}
+		try {
+			SymbolTable symbolTable = SymbolTableGenerator.generate(program);
+			Arrays.stream(symbolTable.importedSymbolInfos())
+					.forEach(symbol -> {
+						try {
+							loadSymbolsRec(
+									new ModuleFinderImpl(
+											Paths.get(System.getProperty("user.dir")).toUri(),
+											new String[]{System.getenv("JOLIE_HOME") + "/packages"}
+									).find(source, symbol.importPath()).uri(),
+									visited
+							);
+						} catch (ModuleNotFoundException e) {
+							throw new RuntimeException(e);
+						}
+					});
+			Arrays.stream(symbolTable.localSymbols())
+					.sorted(Comparator.comparing(symbol -> symbol.node() instanceof ServiceNode ? 1 : 0))
+					.forEach(symbol -> {
+						if (symbol.node() instanceof ServiceNode) {
+							serviceHolder.add((ServiceNode) symbol.node());
+						} else if (symbol.node() instanceof TypeDefinition) {
+							typeHolder.add((TypeDefinition) symbol.node());
+						} else if (symbol.node() instanceof InterfaceDefinition) {
+							interfaceHolder.add((InterfaceDefinition) symbol.node());
+						} else {
+							logger.warn("TODO {} {} {}",
+									symbol.name(),
+									symbol.context().enclosingCodeWithLineNumbers(),
+									symbol.node().getClass().getSimpleName()
+							);
+						}
+					});
+		} catch (ModuleException e) {
+			throw new RuntimeException(e);
+		}
+
 	}
 
 }
