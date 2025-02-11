@@ -29,6 +29,7 @@ service CalculatorService {
 
 
     main {
+        we = 1
         [ sum( request )( response ) {
             for ( t in request.term ) {
                 response = response + t

@@ -16,7 +16,7 @@ interface LocalInterface {
 
 service Croupier( p : CroupierParam ) {
 
-    embed Console as Console
+    embed Console as Console111
     embed Scheduler as Scheduler
 
     execution: concurrent

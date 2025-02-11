@@ -59,20 +59,23 @@ public class Port<T extends PortInfo> {
 			protocolInfoNode = (SumExpressionNode) ((OutputPortInfo) portInfo).protocol();
 		}
 		if (protocolInfoNode != null) {
-			InlineTreeExpressionNode inlineTreeNode =
-					(InlineTreeExpressionNode) ((ProductExpressionNode) protocolInfoNode.operands().get(0).value())
-							                           .operands().get(0).value();
+			ProductExpressionNode pen = (ProductExpressionNode) protocolInfoNode.operands().get(0).value();
+			OLSyntaxNode olSyntaxNode = pen.operands().get(0).value();
+			if (olSyntaxNode instanceof InlineTreeExpressionNode) {
+				InlineTreeExpressionNode inlineTreeNode =
+						(InlineTreeExpressionNode) olSyntaxNode;
 
-			Arrays.stream(inlineTreeNode.operations())
-					.map(op -> (AssignmentOperation) op)
-					.forEach(aop -> {
-						String key = Misc.getProtocolInfoKey(aop);
-						OrConditionNode ocn = (OrConditionNode) aop.expression();
-						AndConditionNode acn = (AndConditionNode) ocn.children().get(0);
-						SumExpressionNode sumExpression = (SumExpressionNode) acn.children().get(0);
-						String value = Misc.getProtocolInfoValue(sumExpression);
-						this.protocolInfo.put(key, value);
-					});
+				Arrays.stream(inlineTreeNode.operations())
+						.map(op -> (AssignmentOperation) op)
+						.forEach(aop -> {
+							String key = Misc.getProtocolInfoKey(aop);
+							OrConditionNode ocn = (OrConditionNode) aop.expression();
+							AndConditionNode acn = (AndConditionNode) ocn.children().get(0);
+							SumExpressionNode sumExpression = (SumExpressionNode) acn.children().get(0);
+							String value = Misc.getProtocolInfoValue(sumExpression);
+							this.protocolInfo.put(key, value);
+						});
+			}
 		}
 	}
 
@@ -91,12 +94,12 @@ public class Port<T extends PortInfo> {
 	@Override
 	public String toString() {
 		return String.format(
-				"%s %s %s\n%s\n%s",
+				"[Port[%s]:\nProtocol: %s\nLocation: %s%s%s]",
 				this.name,
 				this.protocol,
 				this.location,
-				this.protocolInfo,
-				this.interfaceHolder
+				this.protocolInfo.isEmpty() ? "" : (": " + this.protocolInfo),
+				this.interfaceHolder.get().isEmpty() ? "" : ("\nInterfaces:\n" + this.interfaceHolder)
 		);
 	}
 
