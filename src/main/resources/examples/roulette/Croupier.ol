@@ -39,7 +39,7 @@ service Croupier( p : CroupierParam ) {
     }
 
     init {
-        setCallbackOperation@Scheduler( { operationName = "wakeUp" })  
+        setCallbackOperation@Scheduler( { operationName = "wakeUp" })
         // setting cronjob
         setCronJob@Scheduler( {
             jobName = "bet"
