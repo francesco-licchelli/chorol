@@ -51,6 +51,7 @@ public class Port<T extends PortInfo> {
 			this.protocol = "UNKNOWN";
 	}
 
+
 	public void setProtocolInfo(PortInfo portInfo) {
 		SumExpressionNode protocolInfoNode = null;
 		if (portInfo instanceof InputPortInfo) {
@@ -86,6 +87,11 @@ public class Port<T extends PortInfo> {
 	public void setOperations(Map<String, OperationDeclaration> operationsMap) {
 		operationsMap.forEach(operationHolder::add);
 	}
+
+	public InterfaceHolder getInterfaceHolder() {
+		return interfaceHolder;
+	}
+
 
 	public void bindInterfaces(InterfaceHolder interfaceHolder) {
 		this.interfaceHolder.replace(interfaceHolder);

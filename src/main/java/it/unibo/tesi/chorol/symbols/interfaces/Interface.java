@@ -12,18 +12,21 @@ public class Interface {
 
 	Interface(InterfaceDefinition interfaceDefinition) {
 		this.name = interfaceDefinition.name();
-		for (Entry<String, OperationDeclaration> entry : interfaceDefinition.operationsMap().entrySet()) {
-			operationHolder.add(entry.getKey(), entry.getValue());
-		}
+		for (Entry<String, OperationDeclaration> entry : interfaceDefinition.operationsMap().entrySet())
+			this.operationHolder.add(entry.getKey(), entry.getValue());
+	}
+
+	public OperationHolder getOperationHolder() {
+		return this.operationHolder;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("%s:\n%s", name, operationHolder);
+		return String.format("%s:\n%s", this.name, this.operationHolder);
 	}
 
 	public String name() {
-		return name;
+		return this.name;
 	}
 
 }

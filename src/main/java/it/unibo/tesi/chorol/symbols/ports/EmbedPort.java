@@ -18,6 +18,10 @@ public class EmbedPort<T extends PortInfo> extends Port<T> {
 		ref.bindInterfaces(interfaceHolder);
 	}
 
+	public Service getService() {
+		return ref;
+	}
+
 	@Override
 	public String toString() {
 		return String.format("%s\n--> %s", super.toString(), ref.toString());

@@ -95,4 +95,15 @@ public class SymbolManager {
 
 	}
 
+	public TypeHolder getTypeHolder() {
+		return typeHolder;
+	}
+
+	public InterfaceHolder getInterfaceHolder() {
+		return interfaceHolder;
+	}
+
+	public ServiceHolder getServiceHolder() {
+		return serviceHolder;
+	}
 }

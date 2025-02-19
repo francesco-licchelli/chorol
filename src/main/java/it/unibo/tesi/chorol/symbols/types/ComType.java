@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class ComType extends Type {
 	private final TypeHolder typeHolder = new TypeHolder();
 
-	public ComType(TypeInlineDefinition definition) {
+	ComType(TypeInlineDefinition definition) {
 		super(definition);
 		definition.subTypes().forEach(entry -> {
 			TypeDefinition typeDefinition = entry.getValue();
@@ -19,11 +19,11 @@ public class ComType extends Type {
 	@Override
 	public String toString() {
 		return String.format(
-				"%s [%s]",
+				"%s\n%s",
 				super.toString(),
 				typeHolder.get().stream()
 						.map(Type::toString)
-						.collect(Collectors.joining(", "))
+						.collect(Collectors.joining("\n\t"))
 		);
 	}
 

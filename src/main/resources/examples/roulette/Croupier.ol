@@ -16,7 +16,7 @@ interface LocalInterface {
 
 service Croupier( p : CroupierParam ) {
 
-    embed Console as Console111
+    embed Console as Console
     embed Scheduler as Scheduler
 
     execution: concurrent
@@ -40,7 +40,6 @@ service Croupier( p : CroupierParam ) {
 
     init {
         setCallbackOperation@Scheduler( { operationName = "wakeUp" })
-        // setting cronjob
         setCronJob@Scheduler( {
             jobName = "bet"
             groupName = "roulette"
@@ -58,7 +57,6 @@ service Croupier( p : CroupierParam ) {
     }
 
     main {
-
         [ wakeUp() ] {
             rienNeVaPlus@Table()( response )
             for( w in response.winners ) {

@@ -1,8 +1,10 @@
 package it.unibo.tesi.chorol.symbols.interfaces;
 
+import it.unibo.tesi.chorol.symbols.interfaces.operations.Operation;
 import jolie.lang.parse.ast.InterfaceDefinition;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class InterfaceHolder {
@@ -24,6 +26,14 @@ public class InterfaceHolder {
 	public void replace(InterfaceHolder interfaceHolder) {
 		interfaces.keySet().stream().filter(interfaceHolder.get().keySet()::contains)
 				.forEach(key -> interfaces.replace(key, interfaceHolder.get(key)));
+	}
+
+	public Operation getOperation(String operationId) {
+		return interfaces.values().stream()
+				       .flatMap(iface -> iface.getOperationHolder().get().entrySet().stream())
+				       .filter(entry -> entry.getKey().equals(operationId))
+				       .map(Map.Entry::getValue)
+				       .findFirst().orElse(null);
 	}
 
 	@Override

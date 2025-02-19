@@ -9,7 +9,7 @@
     </appender>
 
     <!-- Configurazione del logger root -->
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>
 

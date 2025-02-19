@@ -9,14 +9,22 @@ import jolie.lang.parse.ast.types.TypeDefinition;
 
 public abstract class Operation {
 	protected String name;
-	protected Type requestType;
+	private Type requestType;
 
 	public Operation(OperationDeclaration operationDeclaration) {
-		this.name = operationDeclaration.id();
+		name = operationDeclaration.id();
 		setRequestType(operationDeclaration);
 	}
 
-	public void setRequestType(OperationDeclaration operationDeclaration) {
+	public String getName() {
+		return name;
+	}
+
+	public Type getRequestType() {
+		return requestType;
+	}
+
+	private void setRequestType(OperationDeclaration operationDeclaration) {
 		TypeDefinition requestType = null;
 		if (operationDeclaration instanceof OneWayOperationDeclaration)
 			requestType = ((OneWayOperationDeclaration) operationDeclaration).requestType();
@@ -27,6 +35,6 @@ public abstract class Operation {
 
 	@Override
 	public String toString() {
-		return requestType.name();
+		return name + ": " + requestType.name();
 	}
 }

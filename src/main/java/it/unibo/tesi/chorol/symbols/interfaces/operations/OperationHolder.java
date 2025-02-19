@@ -24,6 +24,10 @@ public class OperationHolder {
 		return requests.get(operationName);
 	}
 
+	public HashMap<String, Operation> get() {
+		return requests;
+	}
+
 	@Override
 	public String toString() {
 		return requests.entrySet().stream()

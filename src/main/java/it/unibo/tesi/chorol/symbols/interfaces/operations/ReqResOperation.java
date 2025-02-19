@@ -9,24 +9,29 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ReqResOperation extends Operation {
-	protected final HashMap<String, Type> faults = new HashMap<>();
-	protected Type responseType;
+	private final HashMap<String, Type> faults = new HashMap<>();
+	private final Type responseType;
 
-	public ReqResOperation(RequestResponseOperationDeclaration operationDeclaration) {
+	ReqResOperation(RequestResponseOperationDeclaration operationDeclaration) {
 		super(operationDeclaration);
-		responseType = new Type(operationDeclaration.responseType());
-		setFaults(operationDeclaration.faults());
+		this.responseType = new Type(operationDeclaration.responseType());
+		this.setFaults(operationDeclaration.faults());
 	}
 
 	private void setFaults(Map<String, TypeDefinition> faults) {
 		faults.forEach((name, definition) -> this.faults.put(name, TypeHolder.getType(definition)));
 	}
 
+	public Type getResponseType() {
+		return this.responseType;
+	}
+
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		if (!faults.isEmpty()) sb.append("throws: ");
-		sb.append(String.join(", ", faults.keySet()));
-		return String.format("%s -> %s %s", super.toString(), responseType.name(), sb);
+		if (!this.faults.isEmpty()) sb.append("throws: ");
+		sb.append(String.join(", ", this.faults.keySet()));
+		return String.format("%s -> %s %s", super.toString(), this.responseType.name(), sb);
 	}
 }
