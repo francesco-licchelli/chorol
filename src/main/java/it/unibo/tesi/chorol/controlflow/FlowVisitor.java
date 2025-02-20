@@ -31,13 +31,9 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 	private static final Logger logger = LoggerFactory.getLogger(FlowVisitor.class);
 	private SymbolManager symbolManager = null;
 
-	private static Operation getOperation(Service service, String operationId, boolean isInput) {
-		Operation op = null;
-		if (isInput) {
-			op = service.getInputPortHolder().getOperation(operationId);
-			op = op != null ? op : service.getOutputPortHolder().getOperation(operationId);
-		}
-		return op;
+	public static Operation getOperation(Service service, String operationId) {
+		Operation op = service.getInputPortHolder().getOperation(operationId);
+		return op != null ? op : service.getOutputPortHolder().getOperation(operationId);
 	}
 
 	void setSymbolManager(SymbolManager symbolManager) {
@@ -83,7 +79,6 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 						.forEach(state -> result.addEdge(state, main.get()));
 				break;
 		}
-		System.out.println(executionMode);
 
 		result.relabelNodesBFS();
 		return result;
@@ -126,10 +121,8 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		return sequenceStatement.children().stream()
 				       .map(child -> child.accept(this, flowContext))
 				       .filter(Objects::nonNull)
-				       .reduce((acc, subGraph) -> {
-					       acc.joinAfter(subGraph);
-					       return acc;
-				       }).orElse(null);
+				       .reduce(FlowGraph::joinAfter)
+				       .orElse(null);
 	}
 
 	@Override
@@ -157,58 +150,42 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 
 	@Override
 	public FlowGraph visit(OneWayOperationStatement oneWayOperationStatement, FlowContext flowContext) {
-		FlowGraph result = new FlowGraph(
+		return new FlowGraph(
+				flowContext.service(),
 				oneWayOperationStatement.id(),
-				flowContext.service().name(),
-				FlowVisitor.getOperation(flowContext.service(), oneWayOperationStatement.id(), true)
+				oneWayOperationStatement.getClass().getSimpleName()
 		);
-		result.getStartNode().setLabel(null);
-		return result;
 	}
 
 	@Override
 	public FlowGraph visit(RequestResponseOperationStatement requestResponseOperationStatement, FlowContext flowContext) {
 		return new FlowGraph(
-				flowContext.service().name(),
+				flowContext.service(),
 				requestResponseOperationStatement.id(),
-				FlowVisitor.getOperation(flowContext.service(), requestResponseOperationStatement.id(), true)
+				requestResponseOperationStatement.getClass().getSimpleName()
 		);
 	}
 
 	@Override
 	public FlowGraph visit(NotificationOperationStatement notificationOperationStatement, FlowContext flowContext) {
-		String serviceName;
-		String functionName;
-		Operation operation;
+		String functionName = notificationOperationStatement.id();
 		Port<OutputPortInfo> p = flowContext.service().getOutputPortHolder().get(notificationOperationStatement.outputPortId());
-		if (p instanceof EmbedPort) {
-			serviceName = ((EmbedPort<?>) p).getService().name();
-			functionName = notificationOperationStatement.id();
-			operation = ((EmbedPort<?>) p).getService().getInputPortHolder().getOperation(notificationOperationStatement.id());
-		} else {
-			serviceName = notificationOperationStatement.outputPortId();
-			functionName = notificationOperationStatement.id();
-			operation = flowContext.service().getOutputPortHolder().getOperation(notificationOperationStatement.id());
-		}
-		return new FlowGraph(serviceName, functionName, operation);
+		Service service = flowContext.service();
+		if (p instanceof EmbedPort)
+			service = ((EmbedPort<?>) p).getService();
+
+		return new FlowGraph(service, functionName, notificationOperationStatement.getClass().getSimpleName());
 	}
 
 	@Override
 	public FlowGraph visit(SolicitResponseOperationStatement solicitResponseOperationStatement, FlowContext flowContext) {
-		String serviceName;
-		String functionName;
-		Operation operation;
+		String functionName = solicitResponseOperationStatement.id();
 		Port<OutputPortInfo> p = flowContext.service().getOutputPortHolder().get(solicitResponseOperationStatement.outputPortId());
-		if (p instanceof EmbedPort) {
-			serviceName = ((EmbedPort<?>) p).getService().name();
-			functionName = solicitResponseOperationStatement.id();
-			operation = ((EmbedPort<?>) p).getService().getInputPortHolder().getOperation(solicitResponseOperationStatement.id());
-		} else {
-			serviceName = flowContext.service().name();
-			functionName = solicitResponseOperationStatement.id();
-			operation = this.symbolManager.getServiceHolder().get(serviceName).getOutputPortHolder().getOperation(functionName);
-		}
-		return new FlowGraph(serviceName, functionName, operation);
+		Service service = flowContext.service();
+		if (p instanceof EmbedPort)
+			service = ((EmbedPort<?>) p).getService();
+
+		return new FlowGraph(service, functionName, solicitResponseOperationStatement.getClass().getSimpleName());
 	}
 
 	@Override
@@ -280,8 +257,15 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 
 	@Override
 	public FlowGraph visit(WhileStatement whileStatement, FlowContext flowContext) {
-		FlowVisitor.logger.info("TODO whileStatement");
-		return null;
+		//TODO puo' avvenire una richiesta nella condizione del while?
+		FlowGraph result = new FlowGraph();
+		result.setStartNode(State.createState(null));
+		FlowGraph body = whileStatement.body().accept(this, flowContext);
+		FlowGraph.clearGraph(body);
+		result.copyGraph(body);
+		result.addEdge(result.getStartNode(), body.getStartNode());
+		result.addEdge(body.getEndNode(), result.getEndNode());
+		return result;
 	}
 
 	@Override
@@ -491,10 +475,15 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 
 	@Override
 	public FlowGraph visit(ForEachArrayItemStatement forEachArrayItemStatement, FlowContext flowContext) {
-		//TODO come dovrei gestire i for ?
-		return forEachArrayItemStatement.body().accept(this, flowContext)
-				       .joinAfter(forEachArrayItemStatement.body().accept(this, flowContext))
-				       .joinAfter(forEachArrayItemStatement.body().accept(this, flowContext));
+		//TODO puo' avvenire una richiesta nella condizione del For?
+		FlowGraph result = new FlowGraph();
+		result.setStartNode(State.createState(null));
+		FlowGraph body = forEachArrayItemStatement.body().accept(this, flowContext);
+		FlowGraph.clearGraph(body);
+		result.copyGraph(body);
+		result.addEdge(result.getStartNode(), body.getStartNode());
+		result.addEdge(body.getEndNode(), result.getEndNode());
+		return result;
 	}
 
 	@Override

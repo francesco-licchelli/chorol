@@ -12,18 +12,18 @@ public class ComType extends Type {
 		super(definition);
 		definition.subTypes().forEach(entry -> {
 			TypeDefinition typeDefinition = entry.getValue();
-			typeHolder.add(typeDefinition);
+			this.typeHolder.add(typeDefinition);
 		});
 	}
 
 	@Override
 	public String toString() {
 		return String.format(
-				"%s\n%s",
+				"%s\\n%s",
 				super.toString(),
-				typeHolder.get().stream()
+				this.typeHolder.get().stream()
 						.map(Type::toString)
-						.collect(Collectors.joining("\n\t"))
+						.collect(Collectors.joining("\\n"))
 		);
 	}
 

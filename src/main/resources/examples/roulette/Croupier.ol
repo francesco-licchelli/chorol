@@ -78,6 +78,7 @@ service Croupier( p : CroupierParam ) {
                 }
                 lost@Player( lost_req )
             }
+            println@Console("finito ")()
         }
     }
 
