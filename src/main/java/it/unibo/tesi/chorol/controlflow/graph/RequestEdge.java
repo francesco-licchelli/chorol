@@ -1,6 +1,7 @@
 package it.unibo.tesi.chorol.controlflow.graph;
 
 import it.unibo.tesi.chorol.symbols.types.Type;
+import it.unibo.tesi.chorol.utils.OutputSettings;
 import org.jgrapht.graph.DefaultEdge;
 
 import static it.unibo.tesi.chorol.utils.Constants.STRING_FORMAT_OPERATION;
@@ -24,7 +25,13 @@ public class RequestEdge extends DefaultEdge {
 	}
 
 	void setLabel(String serviceName, String functionName, Type operationType, String className) {
-		this.label = String.format(STRING_FORMAT_OPERATION, className, functionName, serviceName, operationType.toString());
+		this.label = String.format(
+				STRING_FORMAT_OPERATION,
+				className,
+				functionName,
+				serviceName,
+				OutputSettings.getFullType() ? operationType.toString() : operationType.name()
+		);
 	}
 
 	@Override

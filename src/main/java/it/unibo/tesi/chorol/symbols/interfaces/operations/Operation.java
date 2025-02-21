@@ -11,17 +11,17 @@ public abstract class Operation {
 	protected String name;
 	private Type requestType;
 
-	public Operation(OperationDeclaration operationDeclaration) {
-		name = operationDeclaration.id();
-		setRequestType(operationDeclaration);
+	Operation(OperationDeclaration operationDeclaration) {
+		this.name = operationDeclaration.id();
+		this.setRequestType(operationDeclaration);
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public Type getRequestType() {
-		return requestType;
+		return this.requestType;
 	}
 
 	private void setRequestType(OperationDeclaration operationDeclaration) {
@@ -35,6 +35,6 @@ public abstract class Operation {
 
 	@Override
 	public String toString() {
-		return name + ": " + requestType.name();
+		return this.name + ": " + this.requestType.name();
 	}
 }

@@ -1,13 +1,16 @@
 package it.unibo.tesi.chorol.controlflow.graph;
 
 import it.unibo.tesi.chorol.controlflow.FlowVisitor;
+import it.unibo.tesi.chorol.symbols.interfaces.operations.OneWayOperation;
 import it.unibo.tesi.chorol.symbols.interfaces.operations.Operation;
 import it.unibo.tesi.chorol.symbols.interfaces.operations.ReqResOperation;
 import it.unibo.tesi.chorol.symbols.services.Service;
-import jolie.util.Pair;
 import org.jgrapht.graph.DefaultDirectedGraph;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 import static it.unibo.tesi.chorol.controlflow.graph.State.createState;
 
@@ -19,126 +22,22 @@ public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 		super(RequestEdge.class);
 	}
 
-	public FlowGraph(Service service, String functionName, String opName) {
+	public FlowGraph(Service service, String functionName, String opType) {
 		super(RequestEdge.class);
 		State start = createState(null);
-		State end = createState(functionName);
-		State middle = createState(null);
+		State end = createState(null);
 		this.setStartNode(start);
 		this.setEndNode(end);
 		Operation operation = FlowVisitor.getOperation(service, functionName);
-		if (operation instanceof ReqResOperation) this.addVertex(middle);
-		this.addEdge(start, operation instanceof ReqResOperation ? middle : end)
-				.setLabel(
-						service.name(),
-						functionName,
-						operation.getRequestType(),
-						opName + (operation instanceof ReqResOperation ? ": REQUEST" : "")
-				);
-		if (operation instanceof ReqResOperation) this.addEdge(middle, end).setLabel(
-				service.name(),
-				functionName,
-				((ReqResOperation) operation).getResponseType(),
-				opName + ": RESPONSE"
-		);
-	}
-
-	public static void clearGraph(FlowGraph graph) {
-		boolean modified;
-		do modified = new ArrayList<>(graph.vertexSet()).stream()
-				              .filter(node -> !node.equals(graph.getStartNode()))
-				              .filter(node -> node.getLabel() != null)
-				              .filter(node -> graph.inDegreeOf(node) == 1 || graph.outDegreeOf(node) == 1)
-				              .anyMatch(node -> FlowGraph.collapseIfNeeded(graph, node)); while (modified);
-	}
-
-	private static Pair<Boolean, String> foo(Set<RequestEdge> edges, RequestEdge otherEdge) {
-		boolean allUseless = edges.stream().allMatch(FlowGraph::isUseless);
-		boolean noneUseless = edges.stream().noneMatch(FlowGraph::isUseless);
-		if (allUseless) return new Pair<>(true, otherEdge.getLabel());
-		else if (noneUseless && FlowGraph.isUseless(otherEdge))
-			return new Pair<>(true, edges.iterator().next().getLabel());
-		return new Pair<>(false, null);
-	}
-
-	private static void collapsePair(FlowGraph graph, State nodeA, State nodeB, String newLabel, boolean updateTargetLabel) {
-		State defaultPreserved = updateTargetLabel ? nodeA : nodeB;
-		State defaultRemoved = updateTargetLabel ? nodeB : nodeA;
-
-		if (defaultPreserved.getStateType() == StateType.NORMAL && defaultRemoved.getStateType() != StateType.NORMAL) {
-			State temp = defaultPreserved;
-			defaultPreserved = defaultRemoved;
-			defaultRemoved = temp;
+		if (operation instanceof OneWayOperation)
+			this.addEdge(start, end).setLabel(service.name(), functionName, operation.getRequestType(), opType + " ONE-WAY");
+		else {
+			State middle = createState(null);
+			this.addVertex(middle);
+			this.addEdge(start, middle).setLabel(service.name(), functionName, operation.getRequestType(), opType + " REQUEST");
+			this.addEdge(middle, end).setLabel(service.name(), functionName, ((ReqResOperation) operation).getResponseType(), opType + " RESPONSE");
 		}
-		State preserved = defaultPreserved;
-		State removed = defaultRemoved;
-
-		for (RequestEdge edge : new ArrayList<>(graph.incomingEdgesOf(removed))) {
-			State src = graph.getEdgeSource(edge);
-			if (!src.equals(preserved)) {
-				RequestEdge newEdge = new RequestEdge(newLabel);
-				graph.addEdge(src, preserved, newEdge);
-			}
-			graph.removeEdge(edge);
-		}
-
-		for (RequestEdge edge : new ArrayList<>(graph.outgoingEdgesOf(removed))) {
-			State tgt = graph.getEdgeTarget(edge);
-			if (!tgt.equals(preserved)) {
-				if (updateTargetLabel && tgt.getLabel() == null) tgt.setLabel(removed.getLabel());
-				RequestEdge newEdge = new RequestEdge(newLabel);
-				graph.addEdge(preserved, tgt, newEdge);
-			}
-			graph.removeEdge(edge);
-		}
-
-		graph.removeVertex(removed);
 	}
-
-	private static boolean collapseIfNeeded(FlowGraph graph, State node) {
-		int inDegree = graph.inDegreeOf(node);
-		int outDegree = graph.outDegreeOf(node);
-		boolean collapse = false;
-		String newLabel;
-
-		if (inDegree == 1 && outDegree == 1) {
-			RequestEdge inEdge = graph.incomingEdgesOf(node).iterator().next();
-			RequestEdge outEdge = graph.outgoingEdgesOf(node).iterator().next();
-			boolean inEdgeIsUseless = FlowGraph.isUseless(inEdge);
-			boolean outEdgeIsUseless = FlowGraph.isUseless(outEdge);
-			if (inEdgeIsUseless || outEdgeIsUseless) {
-				collapse = true;
-				newLabel = outEdgeIsUseless ? inEdge.getLabel() : outEdge.getLabel();
-				State predecessor = graph.getEdgeSource(inEdge);
-				FlowGraph.collapsePair(graph, predecessor, node, newLabel, true);
-			}
-		} else if (inDegree == 1 && outDegree > 1) {
-			RequestEdge inEdge = graph.incomingEdgesOf(node).iterator().next();
-			Pair<Boolean, String> pair = FlowGraph.foo(graph.outgoingEdgesOf(node), inEdge);
-			collapse = pair.key();
-			newLabel = pair.value();
-			if (collapse) {
-				State predecessor = graph.getEdgeSource(inEdge);
-				FlowGraph.collapsePair(graph, predecessor, node, newLabel, true);
-			}
-		} else if (inDegree > 1 && outDegree == 1) {
-			RequestEdge outEdge = graph.outgoingEdgesOf(node).iterator().next();
-			Pair<Boolean, String> pair = FlowGraph.foo(graph.incomingEdgesOf(node), outEdge);
-			collapse = pair.key();
-			newLabel = pair.value();
-			if (collapse) {
-				State successor = graph.getEdgeTarget(outEdge);
-				FlowGraph.collapsePair(graph, node, successor, newLabel, false);
-			}
-		}
-
-		return collapse;
-	}
-
-	private static boolean isUseless(RequestEdge edge) {
-		return edge.getLabel() == null || edge.getLabel().isEmpty();
-	}
-
 
 	public State getStartNode() {
 		return this.startNode;
@@ -181,7 +80,6 @@ public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 		if (this.endNode == null) this.endNode = this.startNode;
 
 		if (o.getStartNode() == null) o.setStartNode(createState("start"));
-		FlowGraph.clearGraph(o);
 		this.copyGraph(o);
 		this.addEdge(this.endNode, o.getStartNode());
 		this.endNode = o.getEndNode();
@@ -233,6 +131,16 @@ public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 				}
 			});
 		}
+	}
+
+	public void replace(FlowGraph o) {
+		this.edgeSet().stream().toList().forEach(this::removeEdge);
+		this.vertexSet().stream().toList().forEach(this::removeVertex);
+
+		o.vertexSet().forEach(this::addVertex);
+		o.edgeSet().forEach(edge -> this.addEdge(o.getEdgeSource(edge), o.getEdgeTarget(edge), edge));
+		this.setStartNode(o.getStartNode());
+		this.setEndNode(o.getEndNode());
 	}
 
 

@@ -32,28 +32,25 @@ public class Misc {
 			return new OLParser(scanner, new String[]{}, new ClassLoader() {
 			}).parse();
 		} catch (IOException e) {
-			logger.warn("Error loading program in: {}", path);
+			Misc.logger.warn("Error loading program in: {}", path);
 		} catch (ParserException | URISyntaxException e) {
-			logger.warn(e.getMessage());
+			Misc.logger.warn("A {}", e.getMessage());
 		}
 		return null;
 	}
 
 	public static String getProtocolInfoKey(AssignmentOperation aop) {
 		return aop.path().path().stream()
-				       .map(a -> {
-					       switch (a.key().getClass().getSimpleName()) {
-						       case "ConstantStringExpression":
-							       return a.key().toString();
-						       case "SumExpressionNode":
-							       SumExpressionNode sen3 = (SumExpressionNode) a.key();
-							       return sen3.operands().stream()
-									              .map(b -> (ProductExpressionNode) b.value())
-									              .map(pen -> pen.operands().get(0).value().toString())
-									              .collect(Collectors.joining(""));
-						       default:
-							       return a.key().getClass().getSimpleName() + " TODO";
+				       .map(a -> switch (a.key().getClass().getSimpleName()) {
+					       case "ConstantStringExpression" -> a.key().toString();
+					       case "SumExpressionNode" -> {
+						       SumExpressionNode sen3 = (SumExpressionNode) a.key();
+						       yield sen3.operands().stream()
+								             .map(b -> (ProductExpressionNode) b.value())
+								             .map(pen -> pen.operands().get(0).value().toString())
+								             .collect(Collectors.joining(""));
 					       }
+					       default -> a.key().getClass().getSimpleName() + " TODO";
 				       })
 				       .collect(Collectors.joining("."));
 	}
@@ -71,13 +68,11 @@ public class Misc {
 		int max = r.max();
 		if (min == max)
 			return String.format("%d", min);
-		else {
-			return String.format(
-					"%d-%s",
-					min,
-					max != MAX_VECTOR_SIZE ? Integer.toString(max) : "*"
-			);
-		}
+		else return String.format(
+				"%d-%s",
+				min,
+				max != MAX_VECTOR_SIZE ? Integer.toString(max) : "*"
+		);
 	}
 
 

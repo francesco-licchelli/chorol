@@ -1,7 +1,6 @@
 package it.unibo.tesi.chorol.controlflow;
 
 import it.unibo.tesi.chorol.controlflow.graph.FlowGraph;
-import it.unibo.tesi.chorol.controlflow.graph.RequestEdge;
 import it.unibo.tesi.chorol.controlflow.graph.State;
 import it.unibo.tesi.chorol.controlflow.graph.StateType;
 import it.unibo.tesi.chorol.symbols.SymbolManager;
@@ -9,6 +8,7 @@ import it.unibo.tesi.chorol.symbols.interfaces.operations.Operation;
 import it.unibo.tesi.chorol.symbols.ports.EmbedPort;
 import it.unibo.tesi.chorol.symbols.ports.Port;
 import it.unibo.tesi.chorol.symbols.services.Service;
+import it.unibo.tesi.chorol.utils.GraphUtils;
 import jolie.lang.parse.OLVisitor;
 import jolie.lang.parse.ast.*;
 import jolie.lang.parse.ast.courier.CourierChoiceStatement;
@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 	private static final Logger logger = LoggerFactory.getLogger(FlowVisitor.class);
@@ -46,7 +45,6 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		ServiceNode serviceNode = new ProgramInspectorCreatorVisitor(program).createInspector()
 				                          .getServiceNodes()[0];
 
-		AtomicReference<State> main = new AtomicReference<>();
 		result.setStartNode(State.createState(serviceNode.name()));
 		result.getStartNode().setStateType(StateType.SERVICE);
 		serviceNode.program().children().stream()
@@ -59,26 +57,25 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 									: new FlowContext(
 									this.symbolManager.getServiceHolder().get(serviceNode.name()))
 					);
-					if (definitionNode.id().equals("main")) main.set(subGraph.getStartNode());
+					if (definitionNode.id().equals("main")) subGraph.getStartNode().setMain();
 					result.joinAfter(subGraph);
 				});
 
 		String executionMode = this.symbolManager.getServiceHolder().get(serviceNode.name()).getExecutionMode().name();
 		switch (executionMode) {
 			case "SINGLE":
-				FlowGraph.clearGraph(result);
 				break;
 			case "CONCURRENT":
-				// TODO capire come gestire il caso
-//				break;
 			case "SEQUENTIAL":
-				result.addEdge(result.getEndNode(), main.get());
-				FlowGraph.clearGraph(result);
+				State main = result.vertexSet().stream().filter(State::isMain).findFirst().orElse(null);
+				result.addEdge(result.getEndNode(), main);
 				result.vertexSet().stream()
 						.filter(state -> state.getStateType().equals(StateType.END))
-						.forEach(state -> result.addEdge(state, main.get()));
+						.forEach(state -> result.addEdge(state, main));
 				break;
 		}
+
+		GraphUtils.clearGraph(result);
 
 		result.relabelNodesBFS();
 		return result;
@@ -138,11 +135,8 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 			ndChoiceStatement.children()
 					.forEach(entry -> {
 						FlowGraph key = entry.key().accept(this, flowContext);
-						if (key == null) return;
-						RequestEdge r = key.outgoingEdgesOf(key.getStartNode()).stream().findFirst().orElse(null);
-						if (r == null) return;
 						FlowGraph value = entry.value().accept(this, flowContext);
-						result.joinBetween(value, r.getLabel());
+						result.joinBetween(key.joinAfter(value), null);
 					});
 		}
 		return result;
@@ -153,7 +147,7 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		return new FlowGraph(
 				flowContext.service(),
 				oneWayOperationStatement.id(),
-				oneWayOperationStatement.getClass().getSimpleName()
+				"Input"
 		);
 	}
 
@@ -162,7 +156,7 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		return new FlowGraph(
 				flowContext.service(),
 				requestResponseOperationStatement.id(),
-				requestResponseOperationStatement.getClass().getSimpleName()
+				"Input"
 		);
 	}
 
@@ -174,7 +168,7 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		if (p instanceof EmbedPort)
 			service = ((EmbedPort<?>) p).getService();
 
-		return new FlowGraph(service, functionName, notificationOperationStatement.getClass().getSimpleName());
+		return new FlowGraph(service, functionName, "Output");
 	}
 
 	@Override
@@ -185,7 +179,7 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		if (p instanceof EmbedPort)
 			service = ((EmbedPort<?>) p).getService();
 
-		return new FlowGraph(service, functionName, solicitResponseOperationStatement.getClass().getSimpleName());
+		return new FlowGraph(service, functionName, "Output");
 	}
 
 	@Override
@@ -244,7 +238,7 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		ifStatement.children().forEach(a ->
 				                               result.joinBetween(a.value().accept(this, flowContext), "TODO condizioni"));
 
-		result.joinBetween(elseGraph, "ELSE");
+		result.joinBetween(elseGraph, null);
 
 		return result;
 	}
@@ -261,7 +255,7 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState(null));
 		FlowGraph body = whileStatement.body().accept(this, flowContext);
-		FlowGraph.clearGraph(body);
+//		GraphUtils.clearGraph(body);
 		result.copyGraph(body);
 		result.addEdge(result.getStartNode(), body.getStartNode());
 		result.addEdge(body.getEndNode(), result.getEndNode());
@@ -359,9 +353,7 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState(null));
 		result.setEndNode(State.createState(null));
-		Arrays.stream(installStatement.handlersFunction().pairs()).forEach(pair -> {
-			result.joinBetween(pair.value().accept(this, flowContext), pair.key());
-		});
+		Arrays.stream(installStatement.handlersFunction().pairs()).forEach(pair -> result.joinBetween(pair.value().accept(this, flowContext), pair.key()));
 		return result;
 	}
 
@@ -479,7 +471,7 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState(null));
 		FlowGraph body = forEachArrayItemStatement.body().accept(this, flowContext);
-		FlowGraph.clearGraph(body);
+//		GraphUtils.clearGraph(body);
 		result.copyGraph(body);
 		result.addEdge(result.getStartNode(), body.getStartNode());
 		result.addEdge(body.getEndNode(), result.getEndNode());
@@ -512,7 +504,6 @@ public class FlowVisitor implements OLVisitor<FlowContext, FlowGraph> {
 
 	@Override
 	public FlowGraph visit(SynchronizedStatement synchronizedStatement, FlowContext flowContext) {
-		//TODO come faccio a rappresentare l'accesso esclusivo alla risorsa (synchronizedStatement.id())?
 		return synchronizedStatement.body().accept(this, flowContext);
 	}
 

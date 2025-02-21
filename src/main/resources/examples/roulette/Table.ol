@@ -95,7 +95,7 @@ service TableService( p : TableServiceParam ) {
         [ rienNeVaPlus()( response ) {
             random@Math()( temp )
             winningNumber = response.winningNumber = int( temp * 37 )
-            println@Console("winningNumber: ==> " + winningNumber )()
+           // println@Console("winningNumber: ==> " + winningNumber )()
             synchronized( spinning ) {
                 global.db.spin[ #global.db.spin ] = winningNumber
                 foreach ( gioc : global.db.bets ) {

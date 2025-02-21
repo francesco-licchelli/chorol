@@ -22,7 +22,7 @@ public class Interface {
 
 	@Override
 	public String toString() {
-		return String.format("%s:\n%s", this.name, this.operationHolder);
+		return String.format("%s -> %s", this.name, this.operationHolder);
 	}
 
 	public String name() {

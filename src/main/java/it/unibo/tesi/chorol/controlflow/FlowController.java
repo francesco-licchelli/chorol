@@ -36,7 +36,7 @@ public class FlowController {
 		FlowGraph g = flowVisitor.visit(main, null);
 
 
-		DOTExporter<State, RequestEdge> exporter = FlowController.getStateRequestEdgeDOTExporter(g);
+		DOTExporter<State, RequestEdge> exporter = FlowController.getStateRequestEdgeDOTExporter();
 
 		try (Writer writer = new FileWriter("flowgraph.dot")) {
 			exporter.exportGraph(g, writer);
@@ -46,7 +46,7 @@ public class FlowController {
 
 	}
 
-	private static DOTExporter<State, RequestEdge> getStateRequestEdgeDOTExporter(FlowGraph g) {
+	private static DOTExporter<State, RequestEdge> getStateRequestEdgeDOTExporter() {
 		DOTExporter<State, RequestEdge> exporter = new DOTExporter<>(State::getId);
 
 		exporter.setVertexAttributeProvider(state -> {
@@ -66,7 +66,6 @@ public class FlowController {
 		exporter.setEdgeAttributeProvider(edge -> {
 			Map<String, Attribute> map = new LinkedHashMap<>();
 			map.put("label", createAttribute(edge.toString()));
-			if (g.outgoingEdgesOf(g.getStartNode()).contains(edge)) map.put("arrowhead", createAttribute("none"));
 			return map;
 		});
 

@@ -141,7 +141,8 @@ service Player( p: PlayerServiceParam ) {
             synchronized( wallet ) {
                 global.wallet = global.wallet + request.payout
             }
-            println@Console( "Payout " + request.payout + ", for number " + request.number + " =>> current wallet " + global.wallet )()        
+            
+            println@Console( "Payout " + request.payout + ", for number " + request.number + " =>> current wallet " + global.wallet )()
         }
 
         [ lost( request ) ] {

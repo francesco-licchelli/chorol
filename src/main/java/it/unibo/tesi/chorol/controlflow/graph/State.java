@@ -3,6 +3,7 @@ package it.unibo.tesi.chorol.controlflow.graph;
 public class State {
 	private static int stateCounter = 0;
 	private final String id;
+	private boolean isMain;
 	private String label;
 	private StateType type;
 
@@ -10,6 +11,11 @@ public class State {
 		this.id = id;
 		this.label = label;
 		this.type = StateType.NORMAL;
+		this.isMain = false;
+	}
+
+	public static State createState() {
+		return new State(Integer.toString(State.stateCounter++), null);
 	}
 
 	public static State createState(String label) {
@@ -24,7 +30,7 @@ public class State {
 		return this.label;
 	}
 
-	public void setLabel(String label) {
+	void setLabel(String label) {
 		this.label = label;
 	}
 
@@ -36,8 +42,16 @@ public class State {
 		this.type = type;
 	}
 
+	public boolean isMain() {
+		return this.isMain;
+	}
+
+	public void setMain() {
+		this.isMain = true;
+	}
+
 	@Override
 	public String toString() {
-		return this.label;
+		return this.getLabel();
 	}
 }

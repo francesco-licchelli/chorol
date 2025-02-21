@@ -34,37 +34,33 @@ public class SymbolManager {
 	private final ServiceHolder serviceHolder = new ServiceHolder();
 
 	public SymbolManager(Path root) {
-		loadSymbols(root);
-		serviceHolder.bindInterfaces(interfaceHolder);
+		this.loadSymbols(root);
+		this.serviceHolder.bindInterfaces(this.interfaceHolder);
 
-		logger.info("LOADED TYPES:\n{}\n{}", typeHolder.toString().trim(), "-".repeat(10));
-		logger.info("LOADED INTERFACES:\n{}\n{}", interfaceHolder.toString().trim(), "-".repeat(10));
-		logger.info("LOADED SERVICES:\n{}\n{}", serviceHolder.toString().trim(), "-".repeat(10));
+		SymbolManager.logger.info("LOADED TYPES:\n{}\n{}", this.typeHolder.toString().trim(), "-".repeat(10));
+		SymbolManager.logger.info("LOADED INTERFACES:\n{}\n{}", this.interfaceHolder.toString().trim(), "-".repeat(10));
+		SymbolManager.logger.info("LOADED SERVICES:\n{}\n{}", this.serviceHolder.toString().trim(), "-".repeat(10));
 	}
 
 	private void loadSymbols(Path source) {
-		loadSymbolsRec(source.toUri(), new HashSet<>());
+		this.loadSymbolsRec(source.toUri(), new HashSet<>());
 	}
 
 	private void loadSymbolsRec(URI source, Set<String> visited) {
-		if (visited.contains(source.toString())) {
-			return;
-		}
+		if (visited.contains(source.toString())) return;
 		visited.add(source.toString());
 
 		Program program = loadProgram(source);
-		if (program == null) {
-			return;
-		}
+		if (program == null) return;
 		try {
 			SymbolTable symbolTable = SymbolTableGenerator.generate(program);
 			Arrays.stream(symbolTable.importedSymbolInfos())
 					.forEach(symbol -> {
 						try {
-							loadSymbolsRec(
+							this.loadSymbolsRec(
 									new ModuleFinderImpl(
 											Paths.get(System.getProperty("user.dir")).toUri(),
-											new String[]{System.getenv("JOLIE_HOME") + "/packages"}
+											new String[]{String.valueOf(Paths.get(Paths.get(source).getParent().toUri())), System.getenv("JOLIE_HOME") + "/packages"}
 									).find(source, symbol.importPath()).uri(),
 									visited
 							);
@@ -75,19 +71,16 @@ public class SymbolManager {
 			Arrays.stream(symbolTable.localSymbols())
 					.sorted(Comparator.comparing(symbol -> symbol.node() instanceof ServiceNode ? 1 : 0))
 					.forEach(symbol -> {
-						if (symbol.node() instanceof ServiceNode) {
-							serviceHolder.add((ServiceNode) symbol.node());
-						} else if (symbol.node() instanceof TypeDefinition) {
-							typeHolder.add((TypeDefinition) symbol.node());
-						} else if (symbol.node() instanceof InterfaceDefinition) {
-							interfaceHolder.add((InterfaceDefinition) symbol.node());
-						} else {
-							logger.warn("TODO {} {} {}",
+						if (symbol.node() instanceof ServiceNode) this.serviceHolder.add((ServiceNode) symbol.node());
+						else if (symbol.node() instanceof TypeDefinition)
+							this.typeHolder.add((TypeDefinition) symbol.node());
+						else if (symbol.node() instanceof InterfaceDefinition)
+							this.interfaceHolder.add((InterfaceDefinition) symbol.node());
+						else SymbolManager.logger.warn("TODO {} {} {}",
 									symbol.name(),
 									symbol.context().enclosingCodeWithLineNumbers(),
 									symbol.node().getClass().getSimpleName()
 							);
-						}
 					});
 		} catch (ModuleException e) {
 			throw new RuntimeException(e);
@@ -96,14 +89,14 @@ public class SymbolManager {
 	}
 
 	public TypeHolder getTypeHolder() {
-		return typeHolder;
+		return this.typeHolder;
 	}
 
 	public InterfaceHolder getInterfaceHolder() {
-		return interfaceHolder;
+		return this.interfaceHolder;
 	}
 
 	public ServiceHolder getServiceHolder() {
-		return serviceHolder;
+		return this.serviceHolder;
 	}
 }
