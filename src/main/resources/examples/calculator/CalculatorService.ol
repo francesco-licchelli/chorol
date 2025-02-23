@@ -19,7 +19,15 @@ from console import Console
              for( t in request.term ) {
                  response = response + t
              }
-         }]
+         }] {
+            if (response == 5)
+                exit
+            else if (response == 6)
+                exit
+            else if (response == 8)
+                exit
+		    else exit
+         }
 
          [ sub( request )( response ) {
              response = request.minuend - request.subtraend
@@ -35,6 +43,10 @@ from console import Console
          [ div( request )( response ) {
              response = request.dividend / request.divisor
          }]
+
+        [ shutdown( )( ) ]{
+            exit
+        }
      }
 
  }

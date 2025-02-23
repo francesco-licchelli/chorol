@@ -1,4 +1,4 @@
-package it.unibo.tesi.chorol.controlflow.graph;
+package it.unibo.tesi.chorol.visitor.flow.graph;
 
 import it.unibo.tesi.chorol.symbols.types.Type;
 import it.unibo.tesi.chorol.utils.OutputSettings;

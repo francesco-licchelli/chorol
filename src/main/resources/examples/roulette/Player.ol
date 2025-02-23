@@ -119,7 +119,7 @@ service Player( p: PlayerServiceParam ) {
                 }
                 synchronized( wallet ) {  
                     println@Console( "Player " + global.player + " is trying to send straight up bet on number " + number + ", amount: " + amount )()
-                    if ( ( global.wallet - amount )  > 0 ) {
+                    if ( ( global.wallet - amount )  > 0 ){
                         scope( bet ) {
                             global.wallet = global.wallet - amount
                             install( default => 

@@ -21,5 +21,6 @@ interface CalculatorInterface {
         sum( SumRequest )( int ),
         sub( SubRequest )( int ),
         mul( MulRequest )( double ),
-        div( DivRequest )( double ) 
+        div( DivRequest )( double ),
+        shutdown( void )( void )
 }

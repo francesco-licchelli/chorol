@@ -41,7 +41,6 @@ interface CalculatorInterface {
     RequestResponse:
         sum( SumRequest )( int ) throws NumberException( SubRequest ),
         sub( SubRequest )( int ) throws fault1 fault2 fault3,
-        //bug1 e metto ciao, il typeholder mi trova ciao dichiarato in Prova, che e' fuori dallo scope
         mul( MulRequest )( double ),
         div( DivRequest )( double ),
         shutdown( void )( void ),

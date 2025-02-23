@@ -1,9 +1,9 @@
-package it.unibo.tesi.chorol.controlflow;
+package it.unibo.tesi.chorol.visitor.flow;
 
-import it.unibo.tesi.chorol.controlflow.graph.FlowGraph;
-import it.unibo.tesi.chorol.controlflow.graph.RequestEdge;
-import it.unibo.tesi.chorol.controlflow.graph.State;
 import it.unibo.tesi.chorol.symbols.SymbolManager;
+import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
+import it.unibo.tesi.chorol.visitor.flow.graph.RequestEdge;
+import it.unibo.tesi.chorol.visitor.flow.graph.State;
 import jolie.lang.parse.ast.Program;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.ExportException;
@@ -31,9 +31,8 @@ public class FlowController {
 			FlowController.logger.error("Could not load program in {}", root.toUri());
 			return;
 		}
-		FlowVisitor flowVisitor = new FlowVisitor();
-		flowVisitor.setSymbolManager(symManager);
-		FlowGraph g = flowVisitor.visit(main, null);
+		FlowVisitorBase flowVisitorBase = new FlowVisitor(symManager);
+		FlowGraph g = flowVisitorBase.visit(main, null);
 
 
 		DOTExporter<State, RequestEdge> exporter = FlowController.getStateRequestEdgeDOTExporter();
@@ -51,13 +50,16 @@ public class FlowController {
 
 		exporter.setVertexAttributeProvider(state -> {
 			Map<String, Attribute> map = new LinkedHashMap<>();
-			map.put("label", createAttribute(state.toString()));
+			map.put("label", createAttribute(state.toPrettyString()));
 			switch (state.getStateType()) {
 				case SERVICE:
 					map.put("shape", createAttribute("plaintext"));
 					break;
-				case FUNCTION:
+				case FAULT:
 					map.put("shape", createAttribute("dotted"));
+					break;
+				case EXIT:
+					map.put("shape", createAttribute("doublecircle"));
 					break;
 			}
 			return map;

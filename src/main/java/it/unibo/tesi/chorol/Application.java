@@ -1,8 +1,8 @@
 package it.unibo.tesi.chorol;
 
 
-import it.unibo.tesi.chorol.controlflow.FlowController;
 import it.unibo.tesi.chorol.utils.OutputSettings;
+import it.unibo.tesi.chorol.visitor.flow.FlowController;
 import jolie.lang.parse.ParserException;
 import jolie.lang.parse.module.ModuleException;
 import org.apache.commons.cli.*;
@@ -31,7 +31,7 @@ public class Application {
 
 		if (cmd.hasOption("full-type") || cmd.hasOption("T")) OutputSettings.setFullType(true);
 
-		String filename = "/home/kekko/Studio/tesi/chorol/src/main/resources/examples/roulette/Croupier.ol";
+		String filename = "/home/kekko/Studio/tesi/chorol/src/main/resources/examples/roulette/Table.ol";
 
 		args = new String[]{filename};
 

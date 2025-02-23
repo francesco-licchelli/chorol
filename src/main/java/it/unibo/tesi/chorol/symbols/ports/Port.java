@@ -1,6 +1,7 @@
 package it.unibo.tesi.chorol.symbols.ports;
 
 import it.unibo.tesi.chorol.symbols.interfaces.InterfaceHolder;
+import it.unibo.tesi.chorol.symbols.interfaces.operations.Operation;
 import it.unibo.tesi.chorol.symbols.interfaces.operations.OperationHolder;
 import it.unibo.tesi.chorol.utils.Misc;
 import jolie.lang.parse.ast.*;
@@ -20,13 +21,13 @@ public class Port<T extends PortInfo> {
 	private String location;
 	private String protocol;
 
-	public Port(T portInfo) {
+	Port(T portInfo) {
 		this.name = portInfo.id();
-		setLocation(portInfo);
-		setProtocol(portInfo);
-		setProtocolInfo(portInfo);
-		setInterfaces(portInfo.getInterfaceList());
-		setOperations(portInfo.operationsMap());
+		this.setLocation(portInfo);
+		this.setProtocol(portInfo);
+		this.setProtocolInfo(portInfo);
+		this.setInterfaces(portInfo.getInterfaceList());
+		this.setOperations(portInfo.operationsMap());
 	}
 
 	public void setLocation(PortInfo portInfo) {
@@ -52,20 +53,16 @@ public class Port<T extends PortInfo> {
 	}
 
 
-	public void setProtocolInfo(PortInfo portInfo) {
+	private void setProtocolInfo(PortInfo portInfo) {
 		SumExpressionNode protocolInfoNode = null;
-		if (portInfo instanceof InputPortInfo) {
+		if (portInfo instanceof InputPortInfo)
 			protocolInfoNode = (SumExpressionNode) ((InputPortInfo) portInfo).protocol();
-		} else if (portInfo instanceof OutputPortInfo) {
+		else if (portInfo instanceof OutputPortInfo)
 			protocolInfoNode = (SumExpressionNode) ((OutputPortInfo) portInfo).protocol();
-		}
 		if (protocolInfoNode != null) {
 			ProductExpressionNode pen = (ProductExpressionNode) protocolInfoNode.operands().get(0).value();
 			OLSyntaxNode olSyntaxNode = pen.operands().get(0).value();
-			if (olSyntaxNode instanceof InlineTreeExpressionNode) {
-				InlineTreeExpressionNode inlineTreeNode =
-						(InlineTreeExpressionNode) olSyntaxNode;
-
+			if (olSyntaxNode instanceof InlineTreeExpressionNode inlineTreeNode)
 				Arrays.stream(inlineTreeNode.operations())
 						.map(op -> (AssignmentOperation) op)
 						.forEach(aop -> {
@@ -76,25 +73,35 @@ public class Port<T extends PortInfo> {
 							String value = Misc.getProtocolInfoValue(sumExpression);
 							this.protocolInfo.put(key, value);
 						});
-			}
 		}
 	}
 
 	public void setInterfaces(List<InterfaceDefinition> interfaces) {
-		interfaces.forEach(interfaceHolder::add);
+		interfaces.forEach(this.interfaceHolder::add);
 	}
 
 	public void setOperations(Map<String, OperationDeclaration> operationsMap) {
-		operationsMap.forEach(operationHolder::add);
+		operationsMap.forEach(this.operationHolder::add);
 	}
 
-	public InterfaceHolder getInterfaceHolder() {
-		return interfaceHolder;
+
+	public String getName() {
+		return this.name;
+	}
+
+	InterfaceHolder getInterfaceHolder() {
+		return this.interfaceHolder;
 	}
 
 
 	public void bindInterfaces(InterfaceHolder interfaceHolder) {
 		this.interfaceHolder.replace(interfaceHolder);
+	}
+
+	public Operation getOperation(String operationId) {
+		Operation op = this.operationHolder.get(operationId);
+		if (op != null) return op;
+		return this.interfaceHolder.getOperation(operationId);
 	}
 
 	@Override
@@ -108,5 +115,4 @@ public class Port<T extends PortInfo> {
 				this.interfaceHolder.get().isEmpty() ? "" : ("\nInterfaces:\n" + this.interfaceHolder)
 		);
 	}
-
 }

@@ -1,4 +1,4 @@
-package it.unibo.tesi.chorol.controlflow.graph;
+package it.unibo.tesi.chorol.visitor.flow.graph;
 
 public class State {
 	private static int stateCounter = 0;
@@ -18,16 +18,8 @@ public class State {
 		return new State(Integer.toString(State.stateCounter++), null);
 	}
 
-	public static State createState(String label) {
-		return new State(Integer.toString(State.stateCounter++), label);
-	}
-
 	public String getId() {
 		return this.id;
-	}
-
-	String getLabel() {
-		return this.label;
 	}
 
 	void setLabel(String label) {
@@ -52,6 +44,10 @@ public class State {
 
 	@Override
 	public String toString() {
-		return this.getLabel();
+		return this.id;
+	}
+
+	public String toPrettyString() {
+		return this.label;
 	}
 }

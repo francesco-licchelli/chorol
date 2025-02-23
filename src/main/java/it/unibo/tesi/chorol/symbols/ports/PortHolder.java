@@ -25,9 +25,9 @@ public class PortHolder<T extends PortInfo> {
 		this.ports.put(portInfo.id(), port);
 	}
 
-	public void bindInterfaces(InterfaceHolder interfaceHolder1) {
+	public void bindInterfaces(InterfaceHolder interfaceHolder) {
 		this.ports.values()
-				.forEach(port -> port.bindInterfaces(interfaceHolder1));
+				.forEach(port -> port.bindInterfaces(interfaceHolder));
 	}
 
 	public Port<T> get(String id) {

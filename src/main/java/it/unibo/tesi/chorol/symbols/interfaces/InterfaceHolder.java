@@ -11,25 +11,25 @@ public class InterfaceHolder {
 	private final HashMap<String, Interface> interfaces = new HashMap<>();
 
 	public void add(InterfaceDefinition interfaceDefinition) {
-		if (interfaces.get(interfaceDefinition.name()) == null)
-			interfaces.put(interfaceDefinition.name(), new Interface(interfaceDefinition));
+		if (this.interfaces.get(interfaceDefinition.name()) == null)
+			this.interfaces.put(interfaceDefinition.name(), new Interface(interfaceDefinition));
 	}
 
 	public HashMap<String, Interface> get() {
-		return interfaces;
+		return this.interfaces;
 	}
 
 	public Interface get(String name) {
-		return interfaces.get(name);
+		return this.interfaces.get(name);
 	}
 
 	public void replace(InterfaceHolder interfaceHolder) {
-		interfaces.keySet().stream().filter(interfaceHolder.get().keySet()::contains)
-				.forEach(key -> interfaces.replace(key, interfaceHolder.get(key)));
+		this.interfaces.keySet().stream().filter(interfaceHolder.get().keySet()::contains)
+				.forEach(key -> this.interfaces.replace(key, interfaceHolder.get(key)));
 	}
 
 	public Operation getOperation(String operationId) {
-		return interfaces.values().stream()
+		return this.interfaces.values().stream()
 				       .flatMap(iface -> iface.getOperationHolder().get().entrySet().stream())
 				       .filter(entry -> entry.getKey().equals(operationId))
 				       .map(Map.Entry::getValue)
@@ -38,7 +38,7 @@ public class InterfaceHolder {
 
 	@Override
 	public String toString() {
-		return interfaces.values().stream().map(Interface::toString).collect(Collectors.joining("\n"));
+		return this.interfaces.values().stream().map(Interface::toString).collect(Collectors.joining("\n"));
 	}
 
 }

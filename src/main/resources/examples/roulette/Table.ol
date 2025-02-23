@@ -29,7 +29,7 @@ type RienNeVaPlusResponse {
 
 interface TableToPlayerInterface {
     RequestResponse:
-        straightUpBet( StraightUpBetRequest )( string ) throws LocatioNotValid
+        straightUpBet( StraightUpBetRequest )( string ) throws LocationNotValid
 }
 
 interface TableToCroupierInterface {
@@ -80,7 +80,9 @@ service TableService( p : TableServiceParam ) {
         [ straightUpBet( request )( response ){
      
             scope( check_player ) {
-                install( default => throw( LocatioNotValid))
+                install( WrongNumberFault =>
+                    println@Console( "A wrong number has been inserted!" )(),
+                 default => throw( LocationNotValid))
                 PlayerPort.location = request.player_location
                 check@PlayerPort()()
                 // synchronizing the bet so that it cannot be placed while the 'wheel is spinning'.
@@ -89,29 +91,32 @@ service TableService( p : TableServiceParam ) {
                 }
                 response = "Received straight up bet on number " + request.number + " for player " + request.player
                 println@Console( response )()
+                throw ( WrongNumberFault, data )
             }
         }]
 
         [ rienNeVaPlus()( response ) {
             random@Math()( temp )
             winningNumber = response.winningNumber = int( temp * 37 )
-           // println@Console("winningNumber: ==> " + winningNumber )()
+            println@Console("winningNumber: ==> " + winningNumber )()
             synchronized( spinning ) {
                 global.db.spin[ #global.db.spin ] = winningNumber
                 foreach ( gioc : global.db.bets ) {
                     for ( bet in global.db.bets.( gioc ) ) {
                         if ( winningNumber == bet.number ){
+                            random@Math()( temp )
                             response.winners[ #response.winners ] << {
                                 location_player = bet.player_location
                                 payout = bet.amount * 37
                                 number = bet.number
                             }
-                        } else {
-                            response.loosers[ #response.loosers ] << {
-                                location_player = bet.player_location
-                                lost = bet.amount
-                                number = bet.number
-                            }
+                        }
+                        else if (winningNumber == 6){
+                            random@Math()( temp )
+                            valueToPrettyString@StringUtils( response )( s )
+                        }
+                        else {
+                            valueToPrettyString@StringUtils( response )( s )
                         }
                     }
                 }

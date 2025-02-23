@@ -15,22 +15,22 @@ public class OperationHolder {
 
 	public void add(String operationName, OperationDeclaration operationDeclaration) {
 		if (operationDeclaration instanceof OneWayOperationDeclaration)
-			requests.put(operationName, new OneWayOperation((OneWayOperationDeclaration) operationDeclaration));
+			this.requests.put(operationName, new OneWayOperation((OneWayOperationDeclaration) operationDeclaration));
 		else
-			requests.put(operationName, new ReqResOperation((RequestResponseOperationDeclaration) operationDeclaration));
+			this.requests.put(operationName, new ReqResOperation((RequestResponseOperationDeclaration) operationDeclaration));
 	}
 
 	public Operation get(String operationName) {
-		return requests.get(operationName);
+		return this.requests.get(operationName);
 	}
 
 	public HashMap<String, Operation> get() {
-		return requests;
+		return this.requests;
 	}
 
 	@Override
 	public String toString() {
-		return requests.entrySet().stream()
+		return this.requests.entrySet().stream()
 				       .map(entry -> {
 					       String key = entry.getKey();
 					       Operation request = entry.getValue();
