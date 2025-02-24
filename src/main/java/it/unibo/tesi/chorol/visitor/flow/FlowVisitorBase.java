@@ -103,12 +103,6 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 		return null;
 	}
 
-	@Override
-	public FlowGraph visit(ImportStatement importStatement, FlowContext flowContext) {
-		FlowVisitorBase.logger.info("TODO importStatement");
-		return null;
-	}
-
 
 	/*
 	 * OPERAZIONI CHE NON POSSONO GENERARE CHIAMATE
@@ -162,7 +156,6 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 	public FlowGraph visit(ConstantStringExpression constantStringExpression, FlowContext flowContext) {
 		return null;
 	}
-
 
 	@Override
 	public FlowGraph visit(DeepCopyStatement deepCopyStatement, FlowContext flowContext) {
@@ -346,6 +339,11 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 
 	@Override
 	public FlowGraph visit(DocumentationComment documentationComment, FlowContext flowContext) {
+		return null;
+	}
+
+	@Override
+	public FlowGraph visit(ImportStatement importStatement, FlowContext flowContext) {
 		return null;
 	}
 

@@ -31,7 +31,7 @@ public class Application {
 
 		if (cmd.hasOption("full-type") || cmd.hasOption("T")) OutputSettings.setFullType(true);
 
-		String filename = "/home/kekko/Studio/tesi/chorol/src/main/resources/examples/roulette/Table.ol";
+		String filename = "/home/kekko/Studio/tesi/chorol/src/main/resources/examples/spawn/client.ol";
 
 		args = new String[]{filename};
 

@@ -1,13 +1,17 @@
-include "TemperatureCollectorInterface.iol"
-include "console.iol"
 
-outputPort TemperatureCollector {
-  Location: "socket://localhost:9000"
-  Protocol: sodep
-  Interfaces: TemperatureCollectorInterface
-}
+from .TemperatureCollectorInterface import TemperatureCollectorInterface
+from console import Console
 
-main {
-  getAverageTemperature@TemperatureCollector()( response );
-  println@Console( response )()
+service Client {
+    outputPort TemperatureCollector {
+      Location: "socket://localhost:9000"
+      Protocol: sodep
+      Interfaces: TemperatureCollectorInterface
+    }
+    embed Console as Console
+
+    main {
+      getAverageTemperature@TemperatureCollector()( response );
+      println@Console( response )()
+    }
 }

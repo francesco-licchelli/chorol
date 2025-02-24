@@ -59,8 +59,8 @@ public class SymbolManager {
 						try {
 							this.loadSymbolsRec(
 									new ModuleFinderImpl(
-											Paths.get(System.getProperty("user.dir")).toUri(),
-											new String[]{String.valueOf(Paths.get(Paths.get(source).getParent().toUri())), System.getenv("JOLIE_HOME") + "/packages"}
+											Paths.get(source).getParent().toUri(),
+											new String[]{System.getenv("JOLIE_HOME") + "/packages"}
 									).find(source, symbol.importPath()).uri(),
 									visited
 							);
@@ -86,14 +86,6 @@ public class SymbolManager {
 			throw new RuntimeException(e);
 		}
 
-	}
-
-	public TypeHolder getTypeHolder() {
-		return this.typeHolder;
-	}
-
-	public InterfaceHolder getInterfaceHolder() {
-		return this.interfaceHolder;
 	}
 
 	public ServiceHolder getServiceHolder() {

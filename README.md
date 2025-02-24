@@ -17,8 +17,8 @@ java -jar Application.jar [options]
 
 ## Progress
 
-Done: 68/83
-[████████████████░░░░]
+Done: 69/83
+[█████████████████░░░]
 
 | Syntax node                         | Supported |
 |-------------------------------------|-----------|
@@ -90,6 +90,7 @@ Done: 68/83
 | TypeInlineDefinition                | ✅         |
 | FreshValueExpressionNode            | ✅         |
 | DocumentationComment                | ✅         |
+| ImportStatement                     | ✅         |
 | LinkInStatement                     | ❌         |
 | LinkOutStatement                    | ❌         |
 | DefinitionCallStatement             | ❌         |
@@ -104,4 +105,3 @@ Done: 68/83
 | NotificationForwardStatement        | ❌         |
 | SolicitResponseForwardStatement     | ❌         |
 | ProvideUntilStatement               | ❌         |
-| ImportStatement                     | ❌         |

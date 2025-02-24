@@ -55,9 +55,6 @@ public class FlowController {
 				case SERVICE:
 					map.put("shape", createAttribute("plaintext"));
 					break;
-				case FAULT:
-					map.put("shape", createAttribute("dotted"));
-					break;
 				case EXIT:
 					map.put("shape", createAttribute("doublecircle"));
 					break;
