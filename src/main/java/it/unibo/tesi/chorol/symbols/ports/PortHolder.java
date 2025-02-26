@@ -35,9 +35,12 @@ public class PortHolder<T extends PortInfo> {
 	}
 
 	public Operation getOperation(String operationId) {
+		if (operationId.equals("setCallbackOperation"))
+			System.out.println("setCallbackOperation");
 		return this.ports.values().stream()
 				       .flatMap(port -> port.getInterfaceHolder().get().entrySet().stream())
 				       .flatMap(entry -> entry.getValue().getOperationHolder().get().entrySet().stream())
+				       //	       .peek(a -> System.out.println(a))
 				       .filter(entry -> entry.getKey().equals(operationId))
 				       .map(Map.Entry::getValue).findFirst().orElse(null);
 	}

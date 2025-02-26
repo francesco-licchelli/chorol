@@ -1,7 +1,6 @@
 package it.unibo.tesi.chorol.visitor.flow;
 
 import it.unibo.tesi.chorol.symbols.SymbolManager;
-import it.unibo.tesi.chorol.symbols.interfaces.operations.Operation;
 import it.unibo.tesi.chorol.symbols.ports.Port;
 import it.unibo.tesi.chorol.utils.GraphUtils;
 import it.unibo.tesi.chorol.visitor.expression.ExprVisitor;
@@ -133,19 +132,18 @@ public class FlowVisitor extends FlowVisitorBase {
 
 	@Override
 	public FlowGraph visit(NotificationOperationStatement notificationOperationStatement, FlowContext flowContext) {
-		String functionName = notificationOperationStatement.id();
-		Operation op = flowContext.service().getOutputPortHolder().getOperation(functionName);
 		String serviceName = notificationOperationStatement.context().enclosingCode().get(0)
 				                     .split("@")[1].split("\\(")[0];
-		return new FlowGraph(serviceName, op, "Output", null);
+		Port<OutputPortInfo> port = flowContext.service().getOutputPortHolder().get(serviceName); //TODO oppure l'alias
+		return new FlowGraph(serviceName, port.getOperation(notificationOperationStatement.id()), "Output", null);
 	}
 
 	@Override
 	public FlowGraph visit(SolicitResponseOperationStatement solicitResponseOperationStatement, FlowContext flowContext) {
-		Port<OutputPortInfo> p = flowContext.service().getOutputPortHolder().get(solicitResponseOperationStatement.outputPortId());
 		String serviceName = solicitResponseOperationStatement.context().enclosingCode().get(0)
 				                     .split("@")[1].split("\\(")[0];
-		return new FlowGraph(serviceName, p.getOperation(solicitResponseOperationStatement.id()), "Output", null);
+		Port<OutputPortInfo> port = flowContext.service().getOutputPortHolder().get(serviceName); //TODO oppure l'alias
+		return new FlowGraph(serviceName, port.getOperation(solicitResponseOperationStatement.id()), "Output", null);
 	}
 
 	@Override
