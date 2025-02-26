@@ -107,6 +107,12 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 	/*
 	 * OPERAZIONI CHE NON POSSONO GENERARE CHIAMATE
 	 * */
+
+	@Override
+	public FlowGraph visit(Program program, FlowContext flowContext) {
+		return null;
+	}
+
 	@Override
 	public FlowGraph visit(OneWayOperationDeclaration oneWayOperationDeclaration, FlowContext flowContext) {
 		return null;
@@ -164,11 +170,6 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 
 	@Override
 	public FlowGraph visit(UndefStatement undefStatement, FlowContext flowContext) {
-		return null;
-	}
-
-	@Override
-	public FlowGraph visit(ServiceNode serviceNode, FlowContext flowContext) {
 		return null;
 	}
 

@@ -39,7 +39,8 @@ service Croupier( p : CroupierParam ) {
     }
 
     init {
-        setCallbackOperation@Scheduler( { operationName = "wakeUp" })
+        setCallbackOperation@Scheduler( { operationName = "wakeUp" })  
+        // setting cronjob
         setCronJob@Scheduler( {
             jobName = "bet"
             groupName = "roulette"
@@ -57,6 +58,7 @@ service Croupier( p : CroupierParam ) {
     }
 
     main {
+
         [ wakeUp() ] {
             rienNeVaPlus@Table()( response )
             for( w in response.winners ) {
@@ -78,7 +80,6 @@ service Croupier( p : CroupierParam ) {
                 }
                 lost@Player( lost_req )
             }
-            println@Console("finito ")()
         }
     }
 

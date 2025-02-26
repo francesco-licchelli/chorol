@@ -19,6 +19,7 @@ public class GraphUtils {
 		flowGraph.replace(GraphUtils.minimizeDFA(dfa, dfa.getStartNode(), dfaFinalStates));
 	}
 
+
 	private static FlowGraph removeEpsilonTransitions(FlowGraph flowGraph) {
 		FlowGraph nfa = new FlowGraph();
 		Map<State, State> stateMapping = new HashMap<>();

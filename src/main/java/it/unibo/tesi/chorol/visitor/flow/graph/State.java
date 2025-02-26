@@ -1,13 +1,13 @@
 package it.unibo.tesi.chorol.visitor.flow.graph;
 
 public class State {
-	private static int stateCounter = 0;
+	static int stateCounter = 0;
 	private final String id;
 	private boolean isMain;
 	private String label;
 	private StateType type;
 
-	private State(String id, String label) {
+	State(String id, String label) {
 		this.id = id;
 		this.label = label;
 		this.type = StateType.NORMAL;

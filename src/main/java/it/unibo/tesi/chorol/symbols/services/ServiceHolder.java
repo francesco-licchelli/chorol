@@ -17,6 +17,10 @@ public class ServiceHolder {
 		return this.services.get(serviceName);
 	}
 
+	public final HashMap<String, Service> get() {
+		return this.services;
+	}
+
 	public void bindInterfaces(InterfaceHolder interfaces) {
 		this.services.values().forEach(service -> service.bindInterfaces(interfaces));
 	}

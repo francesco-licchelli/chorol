@@ -1,48 +1,41 @@
 package it.unibo.tesi.chorol.visitor.flow;
 
 import it.unibo.tesi.chorol.symbols.SymbolManager;
+import it.unibo.tesi.chorol.utils.OutputSettings;
 import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
 import it.unibo.tesi.chorol.visitor.flow.graph.RequestEdge;
 import it.unibo.tesi.chorol.visitor.flow.graph.State;
-import jolie.lang.parse.ast.Program;
+import jolie.lang.parse.ast.ServiceNode;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.ExportException;
 import org.jgrapht.nio.dot.DOTExporter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static it.unibo.tesi.chorol.utils.Misc.loadProgram;
 import static org.jgrapht.nio.DefaultAttribute.createAttribute;
 
 public class FlowController {
-	private static final Logger logger = LoggerFactory.getLogger(FlowController.class);
+	private final HashMap<Path, FlowGraph> flowGraphs = new HashMap<>();
 
-	public FlowController(Path root) {
+	public FlowController(Path root, Path output) throws IOException {
 		SymbolManager symManager = new SymbolManager(root);
-		Program main = loadProgram(root.toUri());
-		if (main == null) {
-			FlowController.logger.error("Could not load program in {}", root.toUri());
-			return;
-		}
-		FlowVisitorBase flowVisitorBase = new FlowVisitor(symManager);
-		FlowGraph g = flowVisitorBase.visit(main, null);
-
-
-		DOTExporter<State, RequestEdge> exporter = FlowController.getStateRequestEdgeDOTExporter();
-
-		try (Writer writer = new FileWriter("flowgraph.dot")) {
-			exporter.exportGraph(g, writer);
-		} catch (IOException | ExportException e) {
-			e.printStackTrace();
-		}
-
+		Files.createDirectories(output);
+		symManager.getServices().forEach((path, serviceNodePair) -> {
+			ServiceNode serviceNode = serviceNodePair.key();
+			String newFileName = path.getFileName().toString().replaceFirst("\\.i?ol$", ".dot");
+			Path newPath = output.resolve(newFileName);
+			FlowVisitor flowVisitor = new FlowVisitor(symManager);
+			FlowGraph fg = flowVisitor.visit(serviceNode, new FlowContext(symManager.getServiceHolder().get(serviceNode.name())));
+			if (OutputSettings.shouldSaveStdLib() || serviceNodePair.value())
+				this.flowGraphs.put(newPath, fg);
+		});
 	}
 
 	private static DOTExporter<State, RequestEdge> getStateRequestEdgeDOTExporter() {
@@ -69,5 +62,16 @@ public class FlowController {
 		});
 
 		return exporter;
+	}
+
+	public void save() {
+		DOTExporter<State, RequestEdge> exporter = FlowController.getStateRequestEdgeDOTExporter();
+		this.flowGraphs.forEach((path, flowGraph) -> {
+			try (Writer writer = new FileWriter(path.toFile())) {
+				exporter.exportGraph(flowGraph, writer);
+			} catch (IOException | ExportException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 }

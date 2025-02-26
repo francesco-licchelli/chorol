@@ -8,13 +8,15 @@ import jolie.lang.parse.module.ModuleException;
 import org.apache.commons.cli.*;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Application {
 	public static void main(String[] args) throws ParserException, IOException, ModuleException {
 		Options options = new Options();
-		options.addOption("T", "full-type", false, "Output completo del tipo");
+		options.addOption("T", "full-type", false, "Mostrare composizione tipi ricorsivi");
+		options.addOption("S", "stdlib", false, "Includere anche i servizi della stdlib di Jolie");
+		options.addOption("i", "input", true, "Path del servizio");
+		options.addOption("o", "output", true, "Path delle viste");
 
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
@@ -24,20 +26,16 @@ public class Application {
 			cmd = parser.parse(options, args);
 		} catch (ParseException e) {
 			System.out.println(e.getMessage());
-			formatter.printHelp("ImpostaBooleano", options);
+			formatter.printHelp("", options);
 			System.exit(1);
 			return;
 		}
 
 		if (cmd.hasOption("full-type") || cmd.hasOption("T")) OutputSettings.setFullType(true);
-
-		String filename = "/home/kekko/Studio/tesi/chorol/src/main/resources/examples/roulette/Player.ol";
-
-		args = new String[]{filename};
-
-		Path root = Paths.get(args[0]);
-		FlowController flowController = new FlowController(root);
-
-
+		if (cmd.hasOption("S") || cmd.hasOption("stdlib")) OutputSettings.setSaveStdLib(true);
+		String input = cmd.hasOption("i") ? cmd.getOptionValue("i") : cmd.hasOption("input") ? cmd.getOptionValue("input") : "/home/kekko/Studio/tesi/chorol/src/main/resources/examples/IfThenElse/ifChain.ol";
+		String output = cmd.hasOption("o") ? cmd.getOptionValue("o") : cmd.hasOption("output") ? cmd.getOptionValue("output") : "./generated";
+		FlowController flowController = new FlowController(Paths.get(input), Paths.get(output));
+		flowController.save();
 	}
 }

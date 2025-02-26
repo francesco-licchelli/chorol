@@ -10,7 +10,6 @@ import it.unibo.tesi.chorol.visitor.flow.graph.State;
 import it.unibo.tesi.chorol.visitor.flow.graph.StateType;
 import jolie.lang.parse.ast.*;
 import jolie.lang.parse.ast.expression.OrConditionNode;
-import jolie.lang.parse.util.impl.ProgramInspectorCreatorVisitor;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -25,11 +24,8 @@ public class FlowVisitor extends FlowVisitorBase {
 	}
 
 	@Override
-	public FlowGraph visit(Program program, FlowContext flowContext) {
+	public FlowGraph visit(ServiceNode serviceNode, FlowContext flowContext) {
 		FlowGraph result = new FlowGraph();
-		ServiceNode serviceNode = new ProgramInspectorCreatorVisitor(program).createInspector()
-				                          .getServiceNodes()[0];
-
 		result.setStartNode(State.createState());
 		result.getStartNode().setStateType(StateType.SERVICE);
 		serviceNode.program().children().stream()
@@ -45,7 +41,6 @@ public class FlowVisitor extends FlowVisitorBase {
 					if (definitionNode.id().equals("main")) subGraph.getStartNode().setMain();
 					result.joinAfter(subGraph);
 				});
-
 		String executionMode = this.symbolManager.getServiceHolder().get(serviceNode.name()).getExecutionMode().name();
 		switch (executionMode) {
 			case "SINGLE":
@@ -91,7 +86,7 @@ public class FlowVisitor extends FlowVisitorBase {
 				.map(child -> child.accept(this, flowContext))
 				.filter(Objects::nonNull)
 				.forEach(result::joinAfter);
-		return result;
+		return result.vertexSet().size() == 1 ? null : result;
 	}
 
 
@@ -107,7 +102,7 @@ public class FlowVisitor extends FlowVisitorBase {
 					key.joinAfter(value);
 					result.joinBetween(key.joinAfter(value), null);
 				});
-		return result;
+		return result.vertexSet().size() == 2 ? null : result;
 	}
 
 	@Override
@@ -156,37 +151,36 @@ public class FlowVisitor extends FlowVisitorBase {
 
 		if (ifStatement.children().size() > 1) {
 			AtomicInteger counter = new AtomicInteger(1);
-			ifStatement.children().forEach(entry ->
-					                               result.joinBetween(
-							                               entry.value().accept(this, flowContext),
-							                               String.format("IF#%d[%s]",
-									                               counter.getAndIncrement(),
-									                               new ExprVisitor().visit((OrConditionNode) entry.key(), null))
-					                               )
+			ifStatement.children().forEach(entry -> {
+				FlowGraph value = entry.value().accept(this, flowContext);
+				if (value != null) result.joinBetween(
+						value,
+						String.format("IF#%d[%s]",
+								counter.getAndIncrement(),
+								new ExprVisitor().visit((OrConditionNode) entry.key(), null))
+				);
+			});
+		} else ifStatement.children().forEach(entry -> {
+			FlowGraph value = entry.value().accept(this, flowContext);
+			if (value != null) result.joinBetween(
+					value,
+					String.format("IF[%s]",
+							new ExprVisitor().visit((OrConditionNode) entry.key(), null))
 			);
-		} else ifStatement.children().forEach(entry ->
-				                                      result.joinBetween(
-						                                      entry.value().accept(this, flowContext),
-						                                      String.format("IF[%s]",
-								                                      new ExprVisitor().visit((OrConditionNode) entry.key(), null))
-				                                      )
-		);
-
-		ifStatement.children().forEach(child -> child.value().accept(this, flowContext));
-
+		});
+		String elseLabel = result.vertexSet().size() != 2 ? "ELSE" : null;
 		if (ifStatement.elseProcess() != null) {
 			FlowGraph elseGraph = ifStatement.elseProcess().accept(this, flowContext);
-			result.joinBetween(elseGraph, "ELSE");
-		} else {
+			if (elseGraph != null) result.joinBetween(elseGraph, elseLabel);
+		} else if (!startNode.equals(endNode)) {
 			result.removeEdge(startNode, endNode);
-			result.addEdge(startNode, endNode, new RequestEdge("ELSE"));
+			result.addEdge(startNode, endNode, new RequestEdge(elseLabel));
 		}
 		return result;
 	}
 
 	@Override
 	public FlowGraph visit(WhileStatement whileStatement, FlowContext flowContext) {
-		//TODO puo' avvenire una richiesta nella condizione del while?
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState());
 		FlowGraph body = whileStatement.body().accept(this, flowContext);
@@ -210,9 +204,10 @@ public class FlowVisitor extends FlowVisitorBase {
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState());
 		FlowGraph body = forEachArrayItemStatement.body().accept(this, flowContext);
+//		GraphUtils.clearGraph(body);
 		result.copyGraph(body);
 		result.addEdge(result.getStartNode(), body.getStartNode());
-		result.addEdge(body.getEndNode(), result.getEndNode());
+		result.addEdge(body.getEndNode(), result.getStartNode());
 		return result;
 	}
 
@@ -245,6 +240,9 @@ public class FlowVisitor extends FlowVisitorBase {
 	public FlowGraph visit(Scope scope, FlowContext flowContext) {
 		FlowGraph result = scope.body().accept(this, flowContext);
 		flowContext.removeFaults();
+		/*
+		 * i faults diventano una pila, qui faccio una push prima dell'accept e poi una pop
+		 * */
 		return result;
 	}
 
@@ -263,10 +261,9 @@ public class FlowVisitor extends FlowVisitorBase {
 		FlowGraph result = null;
 		if (flowContext.inInstall() && throwStatement.expression() != null)
 			flowContext.addFault(throwStatement.id(), throwStatement.expression().accept(this, flowContext));
-		else if (!flowContext.inInstall()) {
+		else if (!flowContext.inInstall() && throwStatement.expression() != null) {
 			result = flowContext.getFault(throwStatement.id());
 			if (result == null) result = flowContext.getFault("default");
-			result.vertexSet().stream().filter(state -> state.getStateType().equals(StateType.NORMAL)).forEach(state -> state.setStateType(StateType.FAULT));
 		}
 		return result;
 	}
