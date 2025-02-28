@@ -1,5 +1,6 @@
 package it.unibo.tesi.chorol.visitor.flow;
 
+import it.unibo.tesi.chorol.visitor.flow.context.FlowContext;
 import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
 import jolie.lang.parse.OLVisitor;
 import jolie.lang.parse.ast.*;
@@ -26,12 +27,6 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 	@Override
 	public FlowGraph visit(LinkOutStatement linkOutStatement, FlowContext flowContext) {
 		FlowVisitorBase.logger.info("TODO linkOutStatement");
-		return null;
-	}
-
-	@Override
-	public FlowGraph visit(DefinitionCallStatement definitionCallStatement, FlowContext flowContext) {
-		FlowVisitorBase.logger.info("TODO definitionCallStatement");
 		return null;
 	}
 

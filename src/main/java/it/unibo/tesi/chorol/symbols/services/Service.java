@@ -9,10 +9,7 @@ import jolie.lang.parse.util.impl.ProgramInspectorImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Service {
@@ -20,9 +17,11 @@ public class Service {
 	private final String name;
 	private final PortHolder<InputPortInfo> inputPortHolder = new PortHolder<>();
 	private final PortHolder<OutputPortInfo> outputPortHolder = new PortHolder<>();
+	private final HashMap<String, OLSyntaxNode> definitions = new HashMap<>();
 	private ExecutionMode executionMode;
 
 	Service(ServiceNode serviceNode, ServiceHolder serviceHolder) {
+		//Da qualche parte sono salvati i definition node... li devo trovare
 		this.name = serviceNode.name();
 		ProgramInspectorImpl inspector = (ProgramInspectorImpl) new ProgramInspectorCreatorVisitor(serviceNode.program()).createInspector();
 		Arrays.stream(inspector.getInputPorts()).forEach(this.inputPortHolder::add);
@@ -36,6 +35,7 @@ public class Service {
 				serviceHolder
 		);
 		this.loadExecutionMode(serviceNode);
+		this.loadDefinitions(serviceNode);
 	}
 
 	private void loadEmbeddedServices(List<EmbedServiceNode> nodes, ServiceHolder serviceHolder) {
@@ -61,6 +61,17 @@ public class Service {
 
 		}
 		if (this.executionMode == null) this.executionMode = ExecutionMode.SINGLE;
+	}
+
+	private void loadDefinitions(ServiceNode serviceNode) {
+		serviceNode.program().children().stream()
+				.filter(DefinitionNode.class::isInstance)
+				.map(DefinitionNode.class::cast)
+				.forEach(definitionNode -> this.definitions.put(definitionNode.id(), definitionNode.body()));
+	}
+
+	public OLSyntaxNode getDefinition(String id) {
+		return this.definitions.get(id);
 	}
 
 	public void bindInterfaces(InterfaceHolder interfaceHolder) {

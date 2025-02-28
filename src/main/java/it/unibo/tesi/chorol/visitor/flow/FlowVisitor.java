@@ -33,6 +33,7 @@ public class FlowVisitor extends FlowVisitorBase {
 		serviceNode.program().children().stream()
 				.filter(DefinitionNode.class::isInstance)
 				.map(DefinitionNode.class::cast)
+				.filter(dn -> dn.id().equals("init") || dn.id().equals("main"))
 				.forEach(definitionNode -> {
 					FlowGraph subGraph = this.visit(definitionNode,
 							flowContext != null
@@ -43,6 +44,7 @@ public class FlowVisitor extends FlowVisitorBase {
 					if (definitionNode.id().equals("main")) subGraph.getStartNode().setMain();
 					result.joinAfter(subGraph);
 				});
+
 		Constants.ExecutionMode executionMode = this.symbolManager.getServiceHolder().get(serviceNode.name()).getExecutionMode();
 		switch (executionMode) {
 			case SINGLE:
@@ -268,6 +270,11 @@ public class FlowVisitor extends FlowVisitorBase {
 	public FlowGraph visit(SpawnStatement spawnStatement, FlowContext flowContext) {
 		spawnStatement.upperBoundExpression().accept(this, flowContext);
 		return null;
+	}
+
+	@Override
+	public FlowGraph visit(DefinitionCallStatement definitionCallStatement, FlowContext flowContext) {
+		return flowContext.service().getDefinition(definitionCallStatement.id()).accept(this, flowContext);
 	}
 
 }
