@@ -12,8 +12,6 @@ import java.util.stream.Collectors;
 public class PortHolder<T extends PortInfo> {
 	private final HashMap<String, Port<T>> ports = new HashMap<>();
 
-	public PortHolder() {
-	}
 
 	public void add(T portInfo) {
 		Port<T> port = new Port<>(portInfo);

@@ -8,6 +8,7 @@ import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
 import it.unibo.tesi.chorol.visitor.flow.graph.RequestEdge;
 import it.unibo.tesi.chorol.visitor.flow.graph.State;
 import it.unibo.tesi.chorol.visitor.flow.graph.StateType;
+import jolie.lang.Constants;
 import jolie.lang.parse.ast.*;
 import jolie.lang.parse.ast.expression.OrConditionNode;
 
@@ -41,12 +42,12 @@ public class FlowVisitor extends FlowVisitorBase {
 					if (definitionNode.id().equals("main")) subGraph.getStartNode().setMain();
 					result.joinAfter(subGraph);
 				});
-		String executionMode = this.symbolManager.getServiceHolder().get(serviceNode.name()).getExecutionMode().name();
+		Constants.ExecutionMode executionMode = this.symbolManager.getServiceHolder().get(serviceNode.name()).getExecutionMode();
 		switch (executionMode) {
-			case "SINGLE":
+			case SINGLE:
 				break;
-			case "CONCURRENT":
-			case "SEQUENTIAL":
+			case CONCURRENT:
+			case SEQUENTIAL:
 				State main = result.vertexSet().stream().filter(State::isMain).findFirst().orElse(null);
 				result.addEdge(result.getEndNode(), main);
 				result.vertexSet().stream()
@@ -55,7 +56,7 @@ public class FlowVisitor extends FlowVisitorBase {
 				break;
 		}
 
-		GraphUtils.clearGraph(result);
+		GraphUtils.clearGraph(result, executionMode);
 		result.relabelNodesBFS();
 
 		return result;
@@ -148,36 +149,38 @@ public class FlowVisitor extends FlowVisitorBase {
 		State endNode = State.createState();
 		result.setStartNode(startNode);
 		result.setEndNode(endNode);
+		flowContext.addLayer();
 
-		if (ifStatement.children().size() > 1) {
-			AtomicInteger counter = new AtomicInteger(1);
-			ifStatement.children().forEach(entry -> {
-				FlowGraph value = entry.value().accept(this, flowContext);
-				if (value != null) result.joinBetween(
-						value,
-						String.format("IF#%d[%s]",
-								counter.getAndIncrement(),
-								new ExprVisitor().visit((OrConditionNode) entry.key(), null))
-				);
-			});
-		} else ifStatement.children().forEach(entry -> {
+		AtomicInteger counter = ifStatement.children().size() > 1 ? new AtomicInteger(1) : null;
+
+		ifStatement.children().forEach(entry -> {
+			String label = ((counter != null)
+					                ? String.format("IF#%d", counter.getAndIncrement())
+					                : "IF") +
+					               new ExprVisitor().visit((OrConditionNode) entry.key(), null);
+
+
+			flowContext.addFaultMap();
+
 			FlowGraph value = entry.value().accept(this, flowContext);
-			if (value != null) result.joinBetween(
-					value,
-					String.format("IF[%s]",
-							new ExprVisitor().visit((OrConditionNode) entry.key(), null))
-			);
+
+			if (value != null && value.containsInformation()) result.joinBetween(value, label);
 		});
-		String elseLabel = result.vertexSet().size() != 2 ? "ELSE" : null;
+
+		String elseLabel = result.containsInformation() ? "ELSE" : null;
 		if (ifStatement.elseProcess() != null) {
-			FlowGraph elseGraph = ifStatement.elseProcess().accept(this, flowContext);
-			if (elseGraph != null) result.joinBetween(elseGraph, elseLabel);
+			flowContext.addFaultMap();
+			FlowGraph value = ifStatement.elseProcess().accept(this, flowContext);
+			if (value != null && value.containsInformation()) result.joinBetween(value, elseLabel);
 		} else if (!startNode.equals(endNode)) {
 			result.removeEdge(startNode, endNode);
 			result.addEdge(startNode, endNode, new RequestEdge(elseLabel));
 		}
-		return result;
+
+		flowContext.mergeFaults();
+		return result.containsInformation() ? result : null;
 	}
+
 
 	@Override
 	public FlowGraph visit(WhileStatement whileStatement, FlowContext flowContext) {
@@ -204,7 +207,6 @@ public class FlowVisitor extends FlowVisitorBase {
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState());
 		FlowGraph body = forEachArrayItemStatement.body().accept(this, flowContext);
-//		GraphUtils.clearGraph(body);
 		result.copyGraph(body);
 		result.addEdge(result.getStartNode(), body.getStartNode());
 		result.addEdge(body.getEndNode(), result.getStartNode());
@@ -239,10 +241,7 @@ public class FlowVisitor extends FlowVisitorBase {
 	@Override
 	public FlowGraph visit(Scope scope, FlowContext flowContext) {
 		FlowGraph result = scope.body().accept(this, flowContext);
-		flowContext.removeFaults();
-		/*
-		 * i faults diventano una pila, qui faccio una push prima dell'accept e poi una pop
-		 * */
+		flowContext.clearFaults();
 		return result;
 	}
 

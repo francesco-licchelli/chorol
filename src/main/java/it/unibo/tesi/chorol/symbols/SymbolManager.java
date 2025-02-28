@@ -55,26 +55,18 @@ public class SymbolManager {
 			SymbolTable symbolTable = SymbolTableGenerator.generate(program);
 			Arrays.stream(symbolTable.importedSymbolInfos())
 					.forEach(symbol -> {
-						boolean isImpLocal = true;
-						Path path = Paths.get(source);
-						URI uri;
 						try {
-							uri = new ModuleFinderImpl(
-									path.getParent().toUri(),
-									new String[]{}
-							).find(source, symbol.importPath()).uri();
+							this.loadSymbolsRec(
+									new ModuleFinderImpl(
+											Paths.get(source).getParent().toUri(),
+											new String[]{System.getenv("JOLIE_HOME") + "/packages"}
+									).find(source, symbol.importPath()).uri(),
+									visited,
+									symbol.importPath().toString().startsWith(".")
+							);
 						} catch (ModuleNotFoundException e) {
-							isImpLocal = false;
-							try {
-								uri = new ModuleFinderImpl(
-										path.getParent().toUri(),
-										new String[]{System.getenv("JOLIE_HOME") + "/packages"}
-								).find(source, symbol.importPath()).uri();
-							} catch (ModuleNotFoundException ex) {
-								throw new RuntimeException(ex);
-							}
+							throw new RuntimeException(e);
 						}
-						this.loadSymbolsRec(uri, visited, isImpLocal);
 					});
 			Arrays.stream(symbolTable.localSymbols())
 					.sorted(Comparator.comparing(symbol -> symbol.node() instanceof ServiceNode ? 1 : 0))

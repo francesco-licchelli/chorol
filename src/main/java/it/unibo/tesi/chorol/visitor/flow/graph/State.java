@@ -1,17 +1,19 @@
 package it.unibo.tesi.chorol.visitor.flow.graph;
 
 public class State {
-	static int stateCounter = 0;
+	private static int stateCounter = 0;
 	private final String id;
+	private final boolean marked;
 	private boolean isMain;
 	private String label;
 	private StateType type;
 
-	State(String id, String label) {
+	private State(String id, String label) {
 		this.id = id;
 		this.label = label;
 		this.type = StateType.NORMAL;
 		this.isMain = false;
+		this.marked = false;
 	}
 
 	public static State createState() {

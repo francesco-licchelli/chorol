@@ -20,7 +20,7 @@ Done: 69/83
 
 | Syntax node                         | Supported |
 |-------------------------------------|-----------|
-| Program                             | ✅         |
+| ServiceNode                         | ✅         |
 | DefinitionNode                      | ✅         |
 | ParallelStatement                   | ✅         |
 | SequenceStatement                   | ✅         |
@@ -41,6 +41,7 @@ Done: 69/83
 | InstallStatement                    | ✅         |
 | ThrowStatement                      | ✅         |
 | SpawnStatement                      | ✅         |
+| Program                             | ✅         |
 | OneWayOperationDeclaration          | ✅         |
 | RequestResponseOperationDeclaration | ✅         |
 | AssignStatement                     | ✅         |
@@ -53,7 +54,6 @@ Done: 69/83
 | ConstantStringExpression            | ✅         |
 | DeepCopyStatement                   | ✅         |
 | UndefStatement                      | ✅         |
-| ServiceNode                         | ✅         |
 | EmbedServiceNode                    | ✅         |
 | EmbeddedServiceNode                 | ✅         |
 | SolicitResponseExpressionNode       | ✅         |

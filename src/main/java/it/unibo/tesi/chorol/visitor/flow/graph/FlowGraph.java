@@ -42,6 +42,10 @@ public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 		}
 	}
 
+	public boolean containsInformation() {
+		return this.edgeSet().stream().filter(edge -> !edge.isEpsilon()).findFirst().orElse(null) != null;
+	}
+
 	public State getStartNode() {
 		return this.startNode;
 	}
@@ -82,7 +86,6 @@ public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 		}
 		if (this.endNode == null) this.endNode = this.startNode;
 
-//		if (o.getStartNode() == null) o.setStartNode(createState());
 		this.copyGraph(o);
 		this.addEdge(this.endNode, o.getStartNode());
 		this.setEndNode(o.getEndNode());

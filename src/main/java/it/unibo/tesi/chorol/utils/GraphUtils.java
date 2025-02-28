@@ -4,18 +4,29 @@ import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
 import it.unibo.tesi.chorol.visitor.flow.graph.RequestEdge;
 import it.unibo.tesi.chorol.visitor.flow.graph.State;
 import it.unibo.tesi.chorol.visitor.flow.graph.StateType;
-import jolie.util.Pair;
+import jolie.lang.Constants;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class GraphUtils {
 
-	public static void clearGraph(FlowGraph flowGraph) {
+
+	public static void clearGraph(FlowGraph flowGraph, Constants.ExecutionMode mode) {
 		FlowGraph nfaNoEpsilon = GraphUtils.removeEpsilonTransitions(flowGraph);
 		FlowGraph dfa = GraphUtils.convertToDFA(nfaNoEpsilon);
 		Set<State> dfaFinalStates = new HashSet<>();
-		dfaFinalStates.add(dfa.getEndNode());
+		switch (mode) {
+			case SINGLE:
+				dfa.vertexSet().stream()
+						.filter(v -> v.getStateType().equals(StateType.EXIT))
+						.forEach(dfaFinalStates::add);
+			case CONCURRENT:
+			case SEQUENTIAL:
+				dfa.vertexSet().stream()
+						.filter(v -> v.getStateType().equals(StateType.END))
+						.forEach(dfaFinalStates::add);
+				break;
+		}
 		flowGraph.replace(GraphUtils.minimizeDFA(dfa, dfa.getStartNode(), dfaFinalStates));
 	}
 
@@ -70,8 +81,6 @@ public class GraphUtils {
 		Set<State> startSet = new HashSet<>();
 		startSet.add(nfa.getStartNode());
 		State dfaStart = State.createState();
-		if (startSet.stream().anyMatch(t -> t.getStateType().equals(StateType.FAULT)))
-			dfaStart.setStateType(StateType.FAULT);
 		if (startSet.stream().anyMatch(s -> s.getStateType().equals(StateType.END)))
 			dfaStart.setStateType(StateType.END);
 		if (startSet.stream().anyMatch(s -> s.getStateType().equals(StateType.EXIT)))
@@ -106,8 +115,6 @@ public class GraphUtils {
 				Set<State> destSet = entry.getValue();
 				if (!dfaStates.containsKey(destSet)) {
 					State newDfaState = State.createState();
-					if (destSet.stream().anyMatch(s -> s.getStateType().equals(StateType.FAULT)))
-						newDfaState.setStateType(StateType.FAULT);
 					if (destSet.stream().anyMatch(s -> s.getStateType().equals(StateType.END)))
 						newDfaState.setStateType(StateType.END);
 					if (destSet.stream().anyMatch(s -> s.getStateType().equals(StateType.EXIT)))
@@ -152,75 +159,92 @@ public class GraphUtils {
 		return closure;
 	}
 
-	private static FlowGraph minimizeDFA(FlowGraph dfa, State dfaStart, Set<State> dfaFinalStates) {
+	private static Set<String> getAlphabet(FlowGraph graph) {
+		Set<String> alphabet = new HashSet<>();
+		for (State s : graph.vertexSet())
+			for (RequestEdge edge : graph.outgoingEdgesOf(s)) {
+				String label = edge.getLabel();
+				if (label != null && !label.isEmpty()) alphabet.add(label);
+			}
+		return alphabet;
+	}
+
+/*	private static FlowGraph minimizeDFA(FlowGraph dfa, State dfaStart, Set<State> dfaFinalStates) {
+		// Partizionamento iniziale: stati finali vs non finali
 		Set<State> allStates = new HashSet<>(dfa.vertexSet());
 		Set<State> finalStates = new HashSet<>(dfaFinalStates);
 		Set<State> nonFinalStates = new HashSet<>(allStates);
 		nonFinalStates.removeAll(finalStates);
 
-		Set<Set<State>> partitions = new HashSet<>();
-		if (!finalStates.isEmpty())
-			partitions.add(finalStates);
-		if (!nonFinalStates.isEmpty())
-			partitions.add(nonFinalStates);
+		Set<Set<State>> P = new HashSet<>();
+		if (!finalStates.isEmpty()) P.add(finalStates);
+		if (!nonFinalStates.isEmpty()) P.add(nonFinalStates);
 
-		boolean changed = true;
-		while (changed) {
-			changed = false;
-			Set<Set<State>> newPartitions = new HashSet<>();
-			for (Set<State> group : partitions) {
-				// Utilizziamo una mappa per raccogliere gli stati in base alla loro "firma"
-				Map<String, Set<State>> splitter = new HashMap<>();
-				for (State s : group) {
-					// Costruiamo la firma: per ogni etichetta, accumuliamo tutte le partizioni di destinazione
-					Map<String, List<Set<State>>> signature = new HashMap<>();
-					for (RequestEdge edge : dfa.outgoingEdgesOf(s)) {
-						String symbol = edge.getLabel();
-						State target = dfa.getEdgeTarget(edge);
-						// Trova la partizione contenente il target
-						for (Set<State> p : partitions)
-							if (p.contains(target)) {
-								signature.computeIfAbsent(symbol, k -> new ArrayList<>()).add(p);
-								break;
-							}
-					}
-					// Per poter usare la firma come chiave, la convertiamo in una stringa ordinata
-					String signatureKey = signature.entrySet().stream()
-							                      .sorted(Map.Entry.comparingByKey())
-							                      .map(e -> e.getKey() + ":" +
-									                                e.getValue().stream()
-											                                .map(Object::hashCode)
-											                                .sorted()
-											                                .map(String::valueOf)
-											                                .collect(Collectors.joining(",")))
-							                      .collect(Collectors.joining(";"));
-					splitter.computeIfAbsent(signatureKey, k -> new HashSet<>()).add(s);
+		// W contiene le partizioni candidate per il "split"
+		Queue<Set<State>> W = new LinkedList<>();
+		// Si sceglie la partizione più piccola per ottimizzare
+		if (!finalStates.isEmpty() && finalStates.size() <= nonFinalStates.size())
+			W.add(finalStates);
+		else
+			W.add(nonFinalStates);
+
+		Set<String> alphabet = GraphUtils.getAlphabet(dfa);
+
+		while (!W.isEmpty()) {
+			Set<State> A = W.poll();
+			for (String symbol : alphabet) {
+				Set<State> X = new HashSet<>();
+				for (State s : allStates)
+					for (RequestEdge edge : dfa.outgoingEdgesOf(s))
+						if (symbol.equals(edge.getLabel()) && A.contains(dfa.getEdgeTarget(edge))) {
+							X.add(s);
+							break;
+						}
+				List<Set<State>> toReplace = new ArrayList<>();
+				List<Set<State>> replacements = new ArrayList<>();
+				for (Set<State> Y : new HashSet<>(P)) { // utilizziamo una copia per evitare ConcurrentModificationException
+					Set<State> intersection = new HashSet<>(Y);
+					intersection.retainAll(X);
+					if (intersection.isEmpty() || intersection.size() == Y.size())
+						continue;
+					Set<State> difference = new HashSet<>(Y);
+					difference.removeAll(X);
+					toReplace.add(Y);
+					replacements.add(intersection);
+					replacements.add(difference);
+					// Aggiorniamo W: se Y era presente, lo sostituiamo con entrambe le nuove partizioni,
+					// altrimenti aggiungiamo quella più piccola
+					if (W.contains(Y)) {
+						W.remove(Y);
+						W.add(intersection);
+						W.add(difference);
+					} else if (intersection.size() <= difference.size())
+						W.add(intersection);
+					else
+						W.add(difference);
 				}
-				if (splitter.size() > 1) {
-					changed = true;
-					newPartitions.addAll(splitter.values());
-				} else newPartitions.add(group);
+				P.removeAll(toReplace);
+				P.addAll(replacements);
 			}
-			partitions = newPartitions;
 		}
 
-		FlowGraph minimizzato = new FlowGraph();
+		// Costruiamo il DFA minimizzato a partire dalle partizioni P
+		FlowGraph minimized = new FlowGraph();
 		Map<Set<State>, State> partitionMapping = new HashMap<>();
-		for (Set<State> part : partitions) {
+		for (Set<State> part : P) {
 			State newState = State.createState();
-			if (part.stream().anyMatch(s -> s.getStateType().equals(StateType.FAULT)))
-				newState.setStateType(StateType.FAULT);
+			// Se in una partizione compare uno stato di tipo END o EXIT, lo segnaliamo nel nuovo stato
 			if (part.stream().anyMatch(s -> s.getStateType().equals(StateType.END)))
 				newState.setStateType(StateType.END);
 			if (part.stream().anyMatch(s -> s.getStateType().equals(StateType.EXIT)))
 				newState.setStateType(StateType.EXIT);
-			minimizzato.addVertex(newState);
+			minimized.addVertex(newState);
 			partitionMapping.put(part, newState);
 		}
 
 		State minStart = null;
 		State minFinal = null;
-		for (Set<State> part : partitions) {
+		for (Set<State> part : P) {
 			if (part.contains(dfaStart))
 				minStart = partitionMapping.get(part);
 			for (State s : part)
@@ -232,28 +256,174 @@ public class GraphUtils {
 		if (minFinal == null)
 			minFinal = minStart;
 
-		// Ricostruzione delle transizioni: accumuliamo TUTTE le transizioni (anche se per lo stesso simbolo)
-		for (Set<State> part : partitions) {
-			State statoMin = partitionMapping.get(part);
-			// Utilizziamo una lista per mantenere tutte le coppie (etichetta, stato di destinazione)
-			List<Pair<String, State>> transizioni = new ArrayList<>();
-			for (State s : part)
-				for (RequestEdge edge : dfa.outgoingEdgesOf(s)) {
-					String symbol = edge.getLabel();
-					State target = dfa.getEdgeTarget(edge);
-					for (Set<State> p : partitions)
-						if (p.contains(target)) {
-							transizioni.add(new Pair<>(symbol, partitionMapping.get(p)));
+		for (Set<State> part : P) {
+			State sourceMin = partitionMapping.get(part);
+			for (String symbol : alphabet)
+				for (State s : part)
+					for (RequestEdge edge : dfa.outgoingEdgesOf(s))
+						if (symbol.equals(edge.getLabel())) {
+							State target = dfa.getEdgeTarget(edge);
+							for (Set<State> part2 : P)
+								if (part2.contains(target)) {
+									State targetMin = partitionMapping.get(part2);
+									RequestEdge existingEdge = null;
+									for (RequestEdge e : minimized.outgoingEdgesOf(sourceMin))
+										if (minimized.getEdgeTarget(e).equals(targetMin)) {
+											existingEdge = e;
+											break;
+										}
+									if (existingEdge != null && !existingEdge.getLabel().equals(edge.getLabel())) {
+										String newLabel = existingEdge.getLabel() + "\\n----\\n" + symbol;
+										existingEdge.setLabel(newLabel);
+									} else minimized.addEdge(sourceMin, targetMin, new RequestEdge(symbol));
+									break;
+								}
 							break;
 						}
+		}
+		minimized.setStartNode(minStart);
+		minimized.setEndNode(minFinal);
+		return minimized;
+	}*/
+
+	private static FlowGraph minimizeDFA(FlowGraph dfa, State dfaStart, Set<State> dfaFinalStates) {
+		Set<State> allStates = new HashSet<>(dfa.vertexSet());
+		Set<State> finalStates = new HashSet<>(dfaFinalStates);
+		Set<State> nonFinalStates = new HashSet<>(allStates);
+		nonFinalStates.removeAll(finalStates);
+
+		// Partizionamento iniziale
+		Set<Set<State>> P = new HashSet<>();
+		if (!finalStates.isEmpty()) P.add(finalStates);
+		if (!nonFinalStates.isEmpty()) P.add(nonFinalStates);
+
+		Queue<Set<State>> W = new LinkedList<>();
+		if (!finalStates.isEmpty() && finalStates.size() <= nonFinalStates.size())
+			W.add(finalStates);
+		else
+			W.add(nonFinalStates);
+
+		Set<String> alphabet = GraphUtils.getAlphabet(dfa);
+
+		// Precompute transizioni inverse per ogni simbolo
+		Map<String, Map<State, Set<State>>> reverseTransitions = new HashMap<>();
+		for (String symbol : alphabet) reverseTransitions.put(symbol, new HashMap<>());
+		for (State s : allStates)
+			for (RequestEdge edge : dfa.outgoingEdgesOf(s)) {
+				String symbol = edge.getLabel();
+				State target = dfa.getEdgeTarget(edge);
+				reverseTransitions.get(symbol)
+						.computeIfAbsent(target, t -> new HashSet<>())
+						.add(s);
+			}
+
+		// Mappa per associare ogni stato alla sua partizione
+		Map<State, Set<State>> stateToPartition = new HashMap<>();
+		for (Set<State> part : P) for (State s : part) stateToPartition.put(s, part);
+
+		// Loop principale del partizionamento
+		while (!W.isEmpty()) {
+			Set<State> A = W.poll();
+			for (String symbol : alphabet) {
+				// Calcola X usando le transizioni inverse
+				Set<State> X = new HashSet<>();
+				for (State a : A) {
+					Set<State> pre = reverseTransitions.get(symbol).get(a);
+					if (pre != null) X.addAll(pre);
 				}
-			for (Pair<String, State> tr : transizioni)
-				minimizzato.addEdge(statoMin, tr.value(), new RequestEdge(tr.key()));
+
+				// Raggruppa X per partizione
+				Map<Set<State>, Set<State>> affected = new HashMap<>();
+				for (State s : X) {
+					Set<State> part = stateToPartition.get(s);
+					affected.computeIfAbsent(part, p -> new HashSet<>()).add(s);
+				}
+
+				// Per ogni partizione interessata, esegui lo split
+				for (Map.Entry<Set<State>, Set<State>> entry : affected.entrySet()) {
+					Set<State> Y = entry.getKey();
+					Set<State> intersection = entry.getValue();
+					if (intersection.size() < Y.size()) {
+						Set<State> difference = new HashSet<>(Y);
+						difference.removeAll(intersection);
+
+						// Aggiorna la partizione P
+						P.remove(Y);
+						P.add(intersection);
+						P.add(difference);
+
+						// Aggiorna stateToPartition
+						for (State s : intersection) stateToPartition.put(s, intersection);
+						for (State s : difference) stateToPartition.put(s, difference);
+
+						// Aggiorna W
+						if (W.contains(Y)) {
+							W.remove(Y);
+							W.add(intersection);
+							W.add(difference);
+						} else if (intersection.size() <= difference.size())
+							W.add(intersection);
+						else
+							W.add(difference);
+					}
+				}
+			}
 		}
 
-		minimizzato.setStartNode(minStart);
-		minimizzato.setEndNode(minFinal);
-		return minimizzato;
+		// Costruzione del DFA minimizzato
+		FlowGraph minimized = new FlowGraph();
+		Map<Set<State>, State> partitionMapping = new HashMap<>();
+		for (Set<State> part : P) {
+			State newState = State.createState();
+			// Propaga le proprietà (es. END, EXIT) se presenti in uno degli stati della partizione
+			if (part.stream().anyMatch(s -> s.getStateType().equals(StateType.END)))
+				newState.setStateType(StateType.END);
+			if (part.stream().anyMatch(s -> s.getStateType().equals(StateType.EXIT)))
+				newState.setStateType(StateType.EXIT);
+			minimized.addVertex(newState);
+			partitionMapping.put(part, newState);
+		}
+
+		State minStart = null;
+		State minFinal = null;
+		for (Set<State> part : P) {
+			if (part.contains(dfaStart))
+				minStart = partitionMapping.get(part);
+			for (State s : part)
+				if (dfaFinalStates.contains(s)) {
+					minFinal = partitionMapping.get(part);
+					break;
+				}
+		}
+		if (minFinal == null)
+			minFinal = minStart;
+
+		// Costruzione degli archi: utilizza un rappresentante per ogni partizione
+		for (Set<State> part : P) {
+			State sourceMin = partitionMapping.get(part);
+			State rep = part.iterator().next(); // Rappresentante della partizione
+			for (RequestEdge edge : dfa.outgoingEdgesOf(rep)) {
+				String symbol = edge.getLabel();
+				State target = dfa.getEdgeTarget(edge);
+				Set<State> targetPart = stateToPartition.get(target);
+				State targetMin = partitionMapping.get(targetPart);
+				// Aggiungi l’arco evitando duplicazioni
+				RequestEdge existingEdge = null;
+				for (RequestEdge e : minimized.outgoingEdgesOf(sourceMin))
+					if (minimized.getEdgeTarget(e).equals(targetMin)) {
+						existingEdge = e;
+						break;
+					}
+				if (existingEdge != null && !existingEdge.getLabel().contains(symbol)) {
+					String newLabel = existingEdge.getLabel() + "\\n----\\n" + symbol;
+					existingEdge.setLabel(newLabel);
+				} else if (existingEdge == null) minimized.addEdge(sourceMin, targetMin, new RequestEdge(symbol));
+			}
+		}
+		minimized.setStartNode(minStart);
+		minimized.setEndNode(minFinal);
+		return minimized;
 	}
+
 
 }

@@ -16,11 +16,15 @@ public class RequestEdge extends DefaultEdge {
 		this.setLabel(label);
 	}
 
+	boolean isEpsilon() {
+		return this.getLabel() == null || this.getLabel().isEmpty();
+	}
+
 	public String getLabel() {
 		return this.label;
 	}
 
-	void setLabel(String label) {
+	public void setLabel(String label) {
 		this.label = label;
 	}
 
