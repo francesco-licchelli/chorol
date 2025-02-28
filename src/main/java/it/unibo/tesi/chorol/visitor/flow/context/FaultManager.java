@@ -1,31 +1,20 @@
-package it.unibo.tesi.chorol.visitor.flow;
+package it.unibo.tesi.chorol.visitor.flow.context;
 
-import it.unibo.tesi.chorol.symbols.services.Service;
+
 import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
 
 import java.util.*;
 
-public class FlowContext {
-	private final Service service;
-	// Ogni scope è rappresentato da una lista di HashMap; la pila gestisce gli scope
+public class FaultManager {
+
 	private final Deque<List<HashMap<String, FlowGraph>>> faultScopes = new ArrayDeque<>();
-	private boolean inInstall = false;
+	private final boolean inInstall = false;
 
-	FlowContext(final Service service) {
-		this.service = service;
-		// Inizialmente creiamo uno scope con una lista vuota
+	public void addLayer() {
 		this.faultScopes.push(new ArrayList<>());
 	}
 
-	public Service service() {
-		return this.service;
-	}
-
-	void addLayer() {
-		this.faultScopes.push(new ArrayList<>());
-	}
-
-	void addFault(String key, FlowGraph fault) {
+	public void addFault(String key, FlowGraph fault) {
 		List<HashMap<String, FlowGraph>> currentScope = this.faultScopes.peek();
 		// Inserisce nella mappa più recente (ultimo elemento della lista)
 		if (currentScope.isEmpty()) {
@@ -35,7 +24,7 @@ public class FlowContext {
 		} else currentScope.get(currentScope.size() - 1).put(key, fault);
 	}
 
-	void addFaultMap() {
+	public void addFaultMap() {
 		if (this.faultScopes.peek() == null)
 			this.faultScopes.push(new ArrayList<>());
 		List<HashMap<String, FlowGraph>> currentScope = this.faultScopes.peek();
@@ -43,7 +32,7 @@ public class FlowContext {
 	}
 
 
-	void mergeFaults() {
+	public void mergeFaults() {
 		// Unisce le mappe all'interno dello scope corrente
 		this.mergeTopLayer();
 
@@ -95,7 +84,7 @@ public class FlowContext {
 		currentScope.add(accumulator);
 	}
 
-	FlowGraph getFault(String key) {
+	public FlowGraph getFault(String key) {
 		for (List<HashMap<String, FlowGraph>> scope : this.faultScopes)
 			if (!scope.isEmpty()) {
 				HashMap<String, FlowGraph> map = scope.get(0);
@@ -104,15 +93,8 @@ public class FlowContext {
 		return null;
 	}
 
-	void clearFaults() {
+	public void clearFaults() {
 		this.faultScopes.clear();
 	}
 
-	boolean inInstall() {
-		return this.inInstall;
-	}
-
-	void setInInstall(boolean inInstall) {
-		this.inInstall = inInstall;
-	}
 }

@@ -4,6 +4,7 @@ import it.unibo.tesi.chorol.symbols.SymbolManager;
 import it.unibo.tesi.chorol.symbols.ports.Port;
 import it.unibo.tesi.chorol.utils.GraphUtils;
 import it.unibo.tesi.chorol.visitor.expression.ExprVisitor;
+import it.unibo.tesi.chorol.visitor.flow.context.FlowContext;
 import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
 import it.unibo.tesi.chorol.visitor.flow.graph.RequestEdge;
 import it.unibo.tesi.chorol.visitor.flow.graph.State;
@@ -149,7 +150,7 @@ public class FlowVisitor extends FlowVisitorBase {
 		State endNode = State.createState();
 		result.setStartNode(startNode);
 		result.setEndNode(endNode);
-		flowContext.addLayer();
+		flowContext.faultManager().addLayer();
 
 		AtomicInteger counter = ifStatement.children().size() > 1 ? new AtomicInteger(1) : null;
 
@@ -160,7 +161,7 @@ public class FlowVisitor extends FlowVisitorBase {
 					               new ExprVisitor().visit((OrConditionNode) entry.key(), null);
 
 
-			flowContext.addFaultMap();
+			flowContext.faultManager().addFaultMap();
 
 			FlowGraph value = entry.value().accept(this, flowContext);
 
@@ -169,7 +170,7 @@ public class FlowVisitor extends FlowVisitorBase {
 
 		String elseLabel = result.containsInformation() ? "ELSE" : null;
 		if (ifStatement.elseProcess() != null) {
-			flowContext.addFaultMap();
+			flowContext.faultManager().addFaultMap();
 			FlowGraph value = ifStatement.elseProcess().accept(this, flowContext);
 			if (value != null && value.containsInformation()) result.joinBetween(value, elseLabel);
 		} else if (!startNode.equals(endNode)) {
@@ -177,7 +178,7 @@ public class FlowVisitor extends FlowVisitorBase {
 			result.addEdge(startNode, endNode, new RequestEdge(elseLabel));
 		}
 
-		flowContext.mergeFaults();
+		flowContext.faultManager().mergeFaults();
 		return result.containsInformation() ? result : null;
 	}
 
@@ -241,28 +242,24 @@ public class FlowVisitor extends FlowVisitorBase {
 	@Override
 	public FlowGraph visit(Scope scope, FlowContext flowContext) {
 		FlowGraph result = scope.body().accept(this, flowContext);
-		flowContext.clearFaults();
+		flowContext.faultManager().clearFaults();
 		return result;
 	}
 
 	@Override
 	public FlowGraph visit(InstallStatement installStatement, FlowContext flowContext) {
-		flowContext.setInInstall(true);
 		Arrays.stream(installStatement.handlersFunction().pairs())
 				.forEach(entry ->
-						         flowContext.addFault(entry.key(), entry.value().accept(this, flowContext)));
-		flowContext.setInInstall(false);
+						         flowContext.faultManager().addFault(entry.key(), entry.value().accept(this, flowContext)));
 		return null;
 	}
 
 	@Override
 	public FlowGraph visit(ThrowStatement throwStatement, FlowContext flowContext) {
 		FlowGraph result = null;
-		if (flowContext.inInstall() && throwStatement.expression() != null)
-			flowContext.addFault(throwStatement.id(), throwStatement.expression().accept(this, flowContext));
-		else if (!flowContext.inInstall() && throwStatement.expression() != null) {
-			result = flowContext.getFault(throwStatement.id());
-			if (result == null) result = flowContext.getFault("default");
+		if (throwStatement.expression() != null) {
+			result = flowContext.faultManager().getFault(throwStatement.id());
+			if (result == null) result = flowContext.faultManager().getFault("default");
 		}
 		return result;
 	}
@@ -272,6 +269,5 @@ public class FlowVisitor extends FlowVisitorBase {
 		spawnStatement.upperBoundExpression().accept(this, flowContext);
 		return null;
 	}
-
 
 }

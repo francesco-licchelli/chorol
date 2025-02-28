@@ -2,6 +2,7 @@ package it.unibo.tesi.chorol.visitor.flow;
 
 import it.unibo.tesi.chorol.symbols.SymbolManager;
 import it.unibo.tesi.chorol.utils.OutputSettings;
+import it.unibo.tesi.chorol.visitor.flow.context.FlowContext;
 import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
 import it.unibo.tesi.chorol.visitor.flow.graph.RequestEdge;
 import it.unibo.tesi.chorol.visitor.flow.graph.State;
