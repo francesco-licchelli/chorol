@@ -14,8 +14,10 @@ java -jar Application.jar [options]
 
 - **-T, --full-type**
   When used, graph labels display types recursively,
+
 ## Progress
-Done: 70/83
+
+Done: 71/83
 [█████████████████░░░]
 
 | Syntax node                         | Supported |
@@ -40,8 +42,9 @@ Done: 70/83
 | Scope                               | ✅         |
 | InstallStatement                    | ✅         |
 | ThrowStatement                      | ✅         |
-| SpawnStatement                      | ✅         |
 | DefinitionCallStatement             | ✅         |
+| ProvideUntilStatement               | ✅         |
+| SpawnStatement                      | ✅         |
 | Program                             | ✅         |
 | OneWayOperationDeclaration          | ✅         |
 | RequestResponseOperationDeclaration | ✅         |
@@ -102,4 +105,3 @@ Done: 70/83
 | CourierChoiceStatement              | ❌         |
 | NotificationForwardStatement        | ❌         |
 | SolicitResponseForwardStatement     | ❌         |
-| ProvideUntilStatement               | ❌         |

@@ -92,12 +92,6 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 		return null;
 	}
 
-	@Override
-	public FlowGraph visit(ProvideUntilStatement provideUntilStatement, FlowContext flowContext) {
-		FlowVisitorBase.logger.info("TODO provideUntilStatement");
-		return null;
-	}
-
 
 	/*
 	 * OPERAZIONI CHE NON POSSONO GENERARE CHIAMATE

@@ -1,4 +1,4 @@
-from CalculatorInterfaceModule import CalculatorInterface
+from .CalculatorInterfaceModule import CalculatorInterface
 from console import Console
 
  service CalculatorService {

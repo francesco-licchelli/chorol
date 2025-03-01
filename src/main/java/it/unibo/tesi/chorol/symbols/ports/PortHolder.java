@@ -37,7 +37,11 @@ public class PortHolder<T extends PortInfo> {
 				       .flatMap(port -> port.getInterfaceHolder().get().entrySet().stream())
 				       .flatMap(entry -> entry.getValue().getOperationHolder().get().entrySet().stream())
 				       .filter(entry -> entry.getKey().equals(operationId))
-				       .map(Map.Entry::getValue).findFirst().orElse(null);
+				       .map(Map.Entry::getValue).findFirst().orElseGet(() ->
+						                                                       this.ports.values().stream()
+								                                                       .flatMap(port -> port.getOperationHolder().get().entrySet().stream())
+								                                                       .filter(entry -> entry.getKey().equals(operationId))
+								                                                       .map(Map.Entry::getValue).findFirst().orElse(null));
 	}
 
 	@Override

@@ -36,5 +36,6 @@ service Main {
         }
 
         throw SampleFault(void)
+        f8@output()
     }
 }

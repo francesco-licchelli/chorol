@@ -93,6 +93,10 @@ public class Port<T extends PortInfo> {
 		return this.interfaceHolder;
 	}
 
+	OperationHolder getOperationHolder() {
+		return this.operationHolder;
+	}
+
 
 	public void bindInterfaces(InterfaceHolder interfaceHolder) {
 		this.interfaceHolder.replace(interfaceHolder);
