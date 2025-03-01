@@ -1,18 +1,17 @@
-from .ExampleInterface import ExampleInt
-service example {
+service Main {
 
     outputPort output{
-        location: "socket://localhost:0000"
-        interfaces: ExampleInt
+        oneWay:
+            f1(any), f2(any)
     }
 
 
     main {
-        if ( condition1 ){
-            if ( condition1_1 ){ op1@output(void) }
-            else if ( condition1_2 ){
-                if (condition1_2_1) {
-                    op2@output(void)
+        if ( condizione1 ){
+            if ( condizione2 ){ f1@output(void) }
+            else if ( condizione3 ){
+                if ( condizione4 ) {
+                    f2@output(void)
                 }
             }
         }
