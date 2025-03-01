@@ -1,15 +1,11 @@
-from console import Console
-
-interface ExampleFaultInt {
-    requestResponse:
-        op(any)(any) throws InvalidNumberFormat(string)
-}
-
 service Main {
-    embed Console as Console
+    outputPort output{
+        oneWay:
+            f1(void)
+    }
 
     main {
-        install( InvalidNumberFormat => println@Console( InvalidNumberFormat )() )
-        throw InvalidNumberFormat("ciao")
+        install( SampleFault => f1@output(void))
+        throw SampleFault(void)
     }
 }

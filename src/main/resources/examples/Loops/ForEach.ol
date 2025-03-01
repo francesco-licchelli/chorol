@@ -1,15 +1,13 @@
-from .ExampleInterface import ExampleInt
-service example {
+service Main {
 
     outputPort output{
-        location: "socket://localhost:0000"
-        interfaces: ExampleInt
+        oneWay:
+            f1(any)
     }
-
 
     main {
         for (elem in array){
-            op1@output(void)
+            f1@output(void)
         }
     }
 }

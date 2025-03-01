@@ -1,19 +1,18 @@
-from .ExampleInterface import ExampleInt
-service example {
+service Main {
 
     outputPort output{
-        location: "socket://localhost:0000"
-        interfaces: ExampleInt
+        oneWay:
+            f1(any), f2(any), f3(any)
     }
 
 
     main {
         for (elem1 in array1){
-            op1@output(void)
+            f1@output(void)
             for (elem2 in array2){
-                op2@output(void)
+                f2@output(void)
             }
-            op3@output(void)
+            f3@output(void)
         }
     }
 }

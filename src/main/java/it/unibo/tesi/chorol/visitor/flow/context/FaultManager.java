@@ -15,8 +15,9 @@ public class FaultManager {
 	}
 
 	public void addFault(String key, FlowGraph fault) {
+		if (this.faultScopes.isEmpty())
+			this.faultScopes.push(new ArrayList<>());
 		List<HashMap<String, FlowGraph>> currentScope = this.faultScopes.peek();
-		// Inserisce nella mappa più recente (ultimo elemento della lista)
 		if (currentScope.isEmpty()) {
 			HashMap<String, FlowGraph> newMap = new HashMap<>();
 			newMap.put(key, fault);
@@ -33,16 +34,14 @@ public class FaultManager {
 
 
 	public void mergeFaults() {
-		// Unisce le mappe all'interno dello scope corrente
 		this.mergeTopLayer();
 
-		// Ottieni l'hashmap "T" del top scope (considerando solo l'elemento in posizione 0)
 		List<HashMap<String, FlowGraph>> topScopeList = this.faultScopes.peek();
 		if (topScopeList == null || topScopeList.isEmpty()) return;
 		HashMap<String, FlowGraph> T = topScopeList.get(0);
 
 		Iterator<List<HashMap<String, FlowGraph>>> iterator = this.faultScopes.iterator();
-		if (iterator.hasNext()) iterator.next(); // Salta il top scope
+		if (iterator.hasNext()) iterator.next();
 		while (iterator.hasNext()) {
 			List<HashMap<String, FlowGraph>> scopeList = iterator.next();
 			if (scopeList.isEmpty()) continue;
@@ -79,7 +78,6 @@ public class FaultManager {
 					accumulator.put(key, F);
 				}
 			}
-		// Sostituisce lo "strato" corrente con una lista contenente solo l'accumulatore
 		currentScope.clear();
 		currentScope.add(accumulator);
 	}
