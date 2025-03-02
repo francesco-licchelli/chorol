@@ -15,7 +15,6 @@ public class Application {
 		Options options = new Options();
 		options.addOption("T", "full-type", false, "Mostrare composizione tipi ricorsivi");
 		options.addOption("S", "stdlib", false, "Includere anche i servizi della stdlib di Jolie");
-		options.addOption("c", "save-conditions", false, "Salvare le condizioni degli if");
 		options.addRequiredOption("i", "input", true, "Path del servizio");
 		options.addOption("o", "output", true, "Path delle viste");
 
@@ -34,7 +33,6 @@ public class Application {
 
 		if (cmd.hasOption("full-type") || cmd.hasOption("T")) OutputSettings.setFullType(true);
 		if (cmd.hasOption("S") || cmd.hasOption("stdlib")) OutputSettings.setSaveStdLib(true);
-		if (cmd.hasOption("c") || cmd.hasOption("save-conditions")) OutputSettings.setSaveConditions(true);
 		String input = cmd.hasOption("i") ? cmd.getOptionValue("i") : cmd.getOptionValue("input");
 		String output = cmd.hasOption("o") ? cmd.getOptionValue("o") : cmd.hasOption("output") ? cmd.getOptionValue("output") : "./generated";
 		FlowController flowController = new FlowController(Paths.get(input), Paths.get(output));

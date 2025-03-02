@@ -3,7 +3,6 @@ package it.unibo.tesi.chorol.visitor.flow;
 import it.unibo.tesi.chorol.symbols.SymbolManager;
 import it.unibo.tesi.chorol.symbols.ports.Port;
 import it.unibo.tesi.chorol.utils.GraphUtils;
-import it.unibo.tesi.chorol.utils.OutputSettings;
 import it.unibo.tesi.chorol.visitor.expression.ExprVisitor;
 import it.unibo.tesi.chorol.visitor.flow.context.FlowContext;
 import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
@@ -116,7 +115,7 @@ public class FlowVisitor extends FlowVisitorBase {
 	@Override
 	public FlowGraph visit(OneWayOperationStatement oneWayOperationStatement, FlowContext flowContext) {
 		return new FlowGraph(
-				flowContext.service().name(),
+				flowContext.service().getInputPortHolder().getPortByOperation(oneWayOperationStatement.id()).getName(),
 				flowContext.service().getInputPortHolder().getOperation(oneWayOperationStatement.id()),
 				"Input",
 				null
@@ -126,7 +125,7 @@ public class FlowVisitor extends FlowVisitorBase {
 	@Override
 	public FlowGraph visit(RequestResponseOperationStatement requestResponseOperationStatement, FlowContext flowContext) {
 		return new FlowGraph(
-				flowContext.service().name(),
+				flowContext.service().getInputPortHolder().getPortByOperation(requestResponseOperationStatement.id()).getName(),
 				flowContext.service().getInputPortHolder().getOperation(requestResponseOperationStatement.id()),
 				"Input",
 				requestResponseOperationStatement.process().accept(this, flowContext)
@@ -138,7 +137,7 @@ public class FlowVisitor extends FlowVisitorBase {
 		String serviceName = notificationOperationStatement.context().enclosingCode().get(0)
 				                     .split("@")[1].split("\\(")[0];
 		Port<OutputPortInfo> port = flowContext.service().getOutputPortHolder().get(serviceName); // TODO: alias?
-		return new FlowGraph(serviceName, port.getOperation(notificationOperationStatement.id()), "Output", null);
+		return new FlowGraph(port.getName(), port.getOperation(notificationOperationStatement.id()), "Output", null);
 	}
 
 	@Override
@@ -146,7 +145,7 @@ public class FlowVisitor extends FlowVisitorBase {
 		String serviceName = solicitResponseOperationStatement.context().enclosingCode().get(0)
 				                     .split("@")[1].split("\\(")[0];
 		Port<OutputPortInfo> port = flowContext.service().getOutputPortHolder().get(serviceName); //TODO alias?
-		return new FlowGraph(serviceName, port.getOperation(solicitResponseOperationStatement.id()), "Output", null);
+		return new FlowGraph(port.getName(), port.getOperation(solicitResponseOperationStatement.id()), "Output", null);
 	}
 
 	@Override
@@ -160,16 +159,16 @@ public class FlowVisitor extends FlowVisitorBase {
 		AtomicInteger counter = ifStatement.children().size() > 1 ? new AtomicInteger(1) : null;
 
 		ifStatement.children().forEach(entry -> {
-			String label = !OutputSettings.shouldSaveConditions() ? null :
-					               ((counter != null) ? String.format("IF#%d", counter.getAndIncrement()) : "IF")
-							               + new ExprVisitor().visit((OrConditionNode) entry.key(), null);
+			String label = ((counter != null) ? String.format("IF#%d", counter.getAndIncrement()) : "IF")
+					               + String.format("[%s]",
+					new ExprVisitor().visit((OrConditionNode) entry.key(), null));
 
 			flowContext.faultManager().addFaultMap();
 			FlowGraph value = entry.value().accept(this, flowContext);
 			if (value != null && value.containsInformation()) result.joinBetween(value, label);
 		});
 
-		String elseLabel = OutputSettings.shouldSaveConditions() && result.containsInformation() ? "ELSE" : null;
+		String elseLabel = result.containsInformation() ? "ELSE" : null;
 		if (ifStatement.elseProcess() != null) {
 			flowContext.faultManager().addFaultMap();
 			FlowGraph value = ifStatement.elseProcess().accept(this, flowContext);
