@@ -25,12 +25,12 @@ public abstract class Operation {
 	}
 
 	private void setRequestType(OperationDeclaration operationDeclaration) {
-		TypeDefinition requestType = null;
+		TypeDefinition operationType = null;
 		if (operationDeclaration instanceof OneWayOperationDeclaration)
-			requestType = ((OneWayOperationDeclaration) operationDeclaration).requestType();
+			operationType = ((OneWayOperationDeclaration) operationDeclaration).requestType();
 		else if (operationDeclaration instanceof RequestResponseOperationDeclaration)
-			requestType = ((RequestResponseOperationDeclaration) operationDeclaration).requestType();
-		this.requestType = TypeHolder.getType(requestType);
+			operationType = ((RequestResponseOperationDeclaration) operationDeclaration).requestType();
+		this.requestType = TypeHolder.getType(operationType);
 	}
 
 	@Override

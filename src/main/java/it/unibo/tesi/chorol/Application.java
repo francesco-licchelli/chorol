@@ -15,7 +15,8 @@ public class Application {
 		Options options = new Options();
 		options.addOption("T", "full-type", false, "Mostrare composizione tipi ricorsivi");
 		options.addOption("S", "stdlib", false, "Includere anche i servizi della stdlib di Jolie");
-		options.addOption("i", "input", true, "Path del servizio");
+		options.addOption("c", "save-conditions", false, "Salvare le condizioni degli if");
+		options.addRequiredOption("i", "input", true, "Path del servizio");
 		options.addOption("o", "output", true, "Path delle viste");
 
 		CommandLineParser parser = new DefaultParser();
@@ -26,14 +27,15 @@ public class Application {
 			cmd = parser.parse(options, args);
 		} catch (ParseException e) {
 			System.out.println(e.getMessage());
-			formatter.printHelp("", options);
+			formatter.printHelp("java -jar JolieGraph.jar", options);
 			System.exit(1);
 			return;
 		}
 
 		if (cmd.hasOption("full-type") || cmd.hasOption("T")) OutputSettings.setFullType(true);
 		if (cmd.hasOption("S") || cmd.hasOption("stdlib")) OutputSettings.setSaveStdLib(true);
-		String input = cmd.hasOption("i") ? cmd.getOptionValue("i") : cmd.hasOption("input") ? cmd.getOptionValue("input") : "/home/kekko/Studio/tesi/chorol/src/main/resources/examples/IfThenElse/ifChain.ol";
+		if (cmd.hasOption("c") || cmd.hasOption("save-conditions")) OutputSettings.setSaveConditions(true);
+		String input = cmd.hasOption("i") ? cmd.getOptionValue("i") : cmd.getOptionValue("input");
 		String output = cmd.hasOption("o") ? cmd.getOptionValue("o") : cmd.hasOption("output") ? cmd.getOptionValue("output") : "./generated";
 		FlowController flowController = new FlowController(Paths.get(input), Paths.get(output));
 		flowController.save();

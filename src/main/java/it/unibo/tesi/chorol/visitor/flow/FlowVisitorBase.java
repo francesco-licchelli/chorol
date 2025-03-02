@@ -19,18 +19,6 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 	private static final Logger logger = LoggerFactory.getLogger(FlowVisitorBase.class);
 
 	@Override
-	public FlowGraph visit(LinkInStatement linkInStatement, FlowContext flowContext) {
-		FlowVisitorBase.logger.info("TODO linkInStatement");
-		return null;
-	}
-
-	@Override
-	public FlowGraph visit(LinkOutStatement linkOutStatement, FlowContext flowContext) {
-		FlowVisitorBase.logger.info("TODO linkOutStatement");
-		return null;
-	}
-
-	@Override
 	public FlowGraph visit(CompensateStatement compensateStatement, FlowContext flowContext) {
 		FlowVisitorBase.logger.info("TODO compensateStatement");
 		return null;
@@ -62,13 +50,6 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 
 
 	@Override
-	public FlowGraph visit(VariablePathNode variablePathNode, FlowContext flowContext) {
-		FlowVisitorBase.logger.info("TODO variablePathNode");
-		return null;
-	}
-
-
-	@Override
 	public FlowGraph visit(CourierDefinitionNode courierDefinitionNode, FlowContext flowContext) {
 		FlowVisitorBase.logger.info("TODO courierDefinitionNode");
 		return null;
@@ -89,6 +70,11 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 	@Override
 	public FlowGraph visit(SolicitResponseForwardStatement solicitResponseForwardStatement, FlowContext flowContext) {
 		FlowVisitorBase.logger.info("TODO solicitResponseForwardStatement");
+		return null;
+	}
+
+	@Override
+	public FlowGraph visit(SpawnStatement spawnStatement, FlowContext flowContext) {
 		return null;
 	}
 
@@ -336,5 +322,21 @@ public abstract class FlowVisitorBase implements OLVisitor<FlowContext, FlowGrap
 	public FlowGraph visit(ImportStatement importStatement, FlowContext flowContext) {
 		return null;
 	}
+
+	@Override
+	public FlowGraph visit(LinkInStatement linkInStatement, FlowContext flowContext) {
+		return null;
+	}
+
+	@Override
+	public FlowGraph visit(LinkOutStatement linkOutStatement, FlowContext flowContext) {
+		return null;
+	}
+
+	@Override
+	public FlowGraph visit(VariablePathNode variablePathNode, FlowContext flowContext) {
+		return null;
+	}
+
 
 }

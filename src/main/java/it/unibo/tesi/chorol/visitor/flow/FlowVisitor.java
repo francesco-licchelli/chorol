@@ -3,6 +3,7 @@ package it.unibo.tesi.chorol.visitor.flow;
 import it.unibo.tesi.chorol.symbols.SymbolManager;
 import it.unibo.tesi.chorol.symbols.ports.Port;
 import it.unibo.tesi.chorol.utils.GraphUtils;
+import it.unibo.tesi.chorol.utils.OutputSettings;
 import it.unibo.tesi.chorol.visitor.expression.ExprVisitor;
 import it.unibo.tesi.chorol.visitor.flow.context.FlowContext;
 import it.unibo.tesi.chorol.visitor.flow.graph.FlowGraph;
@@ -31,10 +32,8 @@ public class FlowVisitor extends FlowVisitorBase {
 	public FlowGraph visit(ServiceNode serviceNode, FlowContext flowContext) {
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState());
-		// Tipo SERVICE per lo start node
 		result.getStartNode().setStateType(StateType.SERVICE);
 
-		// Visita i DefinitionNode (init, main)
 		serviceNode.program().children().stream()
 				.filter(DefinitionNode.class::isInstance)
 				.map(DefinitionNode.class::cast)
@@ -80,7 +79,6 @@ public class FlowVisitor extends FlowVisitorBase {
 		result.setStartNode(State.createState());
 		result.setEndNode(State.createState());
 
-		// Unisci i singoli flowGraph in parallelo
 		parallelStatement.children().stream()
 				.map(child -> child.accept(this, flowContext))
 				.forEach(flowGraph -> result.joinBetween(flowGraph, null));
@@ -162,27 +160,25 @@ public class FlowVisitor extends FlowVisitorBase {
 		AtomicInteger counter = ifStatement.children().size() > 1 ? new AtomicInteger(1) : null;
 
 		ifStatement.children().forEach(entry -> {
-			String label = ((counter != null) ? String.format("IF#%d", counter.getAndIncrement()) : "IF")
-					               + new ExprVisitor().visit((OrConditionNode) entry.key(), null);
+			String label = !OutputSettings.shouldSaveConditions() ? null :
+					               ((counter != null) ? String.format("IF#%d", counter.getAndIncrement()) : "IF")
+							               + new ExprVisitor().visit((OrConditionNode) entry.key(), null);
 
 			flowContext.faultManager().addFaultMap();
 			FlowGraph value = entry.value().accept(this, flowContext);
 			if (value != null && value.containsInformation()) result.joinBetween(value, label);
 		});
 
-		// ELSE
-		String elseLabel = result.containsInformation() ? "ELSE" : null;
+		String elseLabel = OutputSettings.shouldSaveConditions() && result.containsInformation() ? "ELSE" : null;
 		if (ifStatement.elseProcess() != null) {
 			flowContext.faultManager().addFaultMap();
 			FlowGraph value = ifStatement.elseProcess().accept(this, flowContext);
 			if (value != null && value.containsInformation()) result.joinBetween(value, elseLabel);
 		} else if (!startNode.equals(endNode)) {
-			// Se non c'è l'else, ma i nodi sono diversi, crea un edge con label "ELSE"
 			result.removeEdge(startNode, endNode);
 			result.addEdge(startNode, endNode, new RequestEdge(elseLabel));
 		}
 
-		// Merge dei fault
 		flowContext.faultManager().mergeFaults();
 
 		return result.containsInformation() ? result : null;
@@ -190,14 +186,73 @@ public class FlowVisitor extends FlowVisitorBase {
 
 	@Override
 	public FlowGraph visit(WhileStatement whileStatement, FlowContext flowContext) {
-		FlowGraph result = new FlowGraph();
-		result.setStartNode(State.createState());
+		FlowGraph inner = new FlowGraph();
+		inner.setStartNode(State.createState());
+		inner.setEndNode(State.createState());
 		FlowGraph body = whileStatement.body().accept(this, flowContext);
-		result.copyGraph(body);
-		// Arco startNode -> body.startNode
-		result.addEdge(result.getStartNode(), body.getStartNode());
-		// Arco body.endNode -> result.endNode
-		result.addEdge(body.getEndNode(), result.getEndNode());
+		inner.joinBetween(body, null);
+		inner.addEdge(inner.getEndNode(), inner.getStartNode());
+
+		FlowGraph result = new FlowGraph();
+		result.setStartNode(inner.getStartNode());
+		result.setEndNode(inner.getEndNode());
+		result.joinBetween(inner, null);
+		result.addEdge(result.getStartNode(), result.getEndNode());
+
+		return result;
+	}
+
+	@Override
+	public FlowGraph visit(ForEachArrayItemStatement forEachArrayItemStatement, FlowContext flowContext) {
+		FlowGraph inner = new FlowGraph();
+		inner.setStartNode(State.createState());
+		inner.setEndNode(State.createState());
+		FlowGraph body = forEachArrayItemStatement.body().accept(this, flowContext);
+		inner.joinBetween(body, null);
+		inner.addEdge(inner.getEndNode(), inner.getStartNode());
+
+		FlowGraph result = new FlowGraph();
+		result.setStartNode(inner.getStartNode());
+		result.setEndNode(inner.getEndNode());
+		result.joinBetween(inner, null);
+		result.addEdge(result.getStartNode(), result.getEndNode());
+
+		return result;
+	}
+
+	@Override
+	public FlowGraph visit(ForStatement forStatement, FlowContext flowContext) {
+		FlowGraph inner = new FlowGraph();
+		inner.setStartNode(State.createState());
+		inner.setEndNode(State.createState());
+		FlowGraph body = forStatement.body().accept(this, flowContext);
+		inner.joinBetween(body, null);
+		inner.addEdge(inner.getEndNode(), inner.getStartNode());
+
+		FlowGraph result = new FlowGraph();
+		result.setStartNode(inner.getStartNode());
+		result.setEndNode(inner.getEndNode());
+		result.joinBetween(inner, null);
+		result.addEdge(result.getStartNode(), result.getEndNode());
+
+		return result;
+	}
+
+	@Override
+	public FlowGraph visit(ForEachSubNodeStatement forEachSubNodeStatement, FlowContext flowContext) {
+		FlowGraph inner = new FlowGraph();
+		inner.setStartNode(State.createState());
+		inner.setEndNode(State.createState());
+		FlowGraph body = forEachSubNodeStatement.body().accept(this, flowContext);
+		inner.joinBetween(body, null);
+		inner.addEdge(inner.getEndNode(), inner.getStartNode());
+
+		FlowGraph result = new FlowGraph();
+		result.setStartNode(inner.getStartNode());
+		result.setEndNode(inner.getEndNode());
+		result.joinBetween(inner, null);
+		result.addEdge(result.getStartNode(), result.getEndNode());
+
 		return result;
 	}
 
@@ -210,27 +265,6 @@ public class FlowVisitor extends FlowVisitorBase {
 		return result;
 	}
 
-	@Override
-	public FlowGraph visit(ForEachArrayItemStatement forEachArrayItemStatement, FlowContext flowContext) {
-		// Esempio di loop: start -> body -> start
-		FlowGraph result = new FlowGraph();
-		result.setStartNode(State.createState());
-		FlowGraph body = forEachArrayItemStatement.body().accept(this, flowContext);
-		result.copyGraph(body);
-		result.addEdge(result.getStartNode(), body.getStartNode());
-		result.addEdge(body.getEndNode(), result.getStartNode());
-		return result;
-	}
-
-	@Override
-	public FlowGraph visit(ForStatement forStatement, FlowContext flowContext) {
-		return forStatement.body().accept(this, flowContext);
-	}
-
-	@Override
-	public FlowGraph visit(ForEachSubNodeStatement forEachSubNodeStatement, FlowContext flowContext) {
-		return forEachSubNodeStatement.body().accept(this, flowContext);
-	}
 
 	@Override
 	public FlowGraph visit(SynchronizedStatement synchronizedStatement, FlowContext flowContext) {
@@ -247,16 +281,13 @@ public class FlowVisitor extends FlowVisitorBase {
 
 	@Override
 	public FlowGraph visit(Scope scope, FlowContext flowContext) {
-		// Semplicemente visita il body
 		FlowGraph result = scope.body().accept(this, flowContext);
-		// Azzera i fault accumulati
 		flowContext.faultManager().clearFaults();
 		return result;
 	}
 
 	@Override
 	public FlowGraph visit(InstallStatement installStatement, FlowContext flowContext) {
-		// Aggiunge i fault handler nel faultManager
 		Arrays.stream(installStatement.handlersFunction().pairs())
 				.forEach(entry ->
 						         flowContext.faultManager().addFault(entry.key(), entry.value().accept(this, flowContext)));
@@ -267,7 +298,6 @@ public class FlowVisitor extends FlowVisitorBase {
 	public FlowGraph visit(ThrowStatement throwStatement, FlowContext flowContext) {
 		FlowGraph result = null;
 		if (throwStatement.expression() != null) {
-			// Prova a recuperare un grafo di fault associato all'id, se non esiste prende default
 			result = flowContext.faultManager().getFault(throwStatement.id());
 			if (result == null) result = flowContext.faultManager().getFault("default");
 		}
@@ -276,7 +306,6 @@ public class FlowVisitor extends FlowVisitorBase {
 
 	@Override
 	public FlowGraph visit(DefinitionCallStatement definitionCallStatement, FlowContext flowContext) {
-		// Chiama la definizione memorizzata nel service
 		return flowContext.service().getDefinition(definitionCallStatement.id()).accept(this, flowContext);
 	}
 
@@ -293,18 +322,12 @@ public class FlowVisitor extends FlowVisitorBase {
 
 		FlowGraph until = provideUntilStatement.until().accept(this, flowContext);
 		if (until != null && until.containsInformation()) {
-			result.joinBetween(until, "UNTIL");
+			result.joinBetween(until, null);
 			result.setEndNode(until.getEndNode());
 		} else
 			result.addEdge(result.getStartNode(), result.getEndNode());
 
-		return result;
-	}
 
-	@Override
-	public FlowGraph visit(SpawnStatement spawnStatement, FlowContext flowContext) {
-		// Visita l'espressione che stabilisce l'upper bound, ma non crea alcun FlowGraph
-		spawnStatement.upperBoundExpression().accept(this, flowContext);
-		return null;
+		return result;
 	}
 }

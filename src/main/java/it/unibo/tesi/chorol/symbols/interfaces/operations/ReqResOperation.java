@@ -26,7 +26,6 @@ public class ReqResOperation extends Operation {
 		return this.responseType;
 	}
 
-
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

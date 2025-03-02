@@ -1,6 +1,7 @@
 package it.unibo.tesi.chorol.utils;
 
 public class OutputSettings {
+	private static boolean saveConditions = false;
 	private static boolean fullType = false;
 	private static boolean saveStdLib = false;
 
@@ -18,5 +19,13 @@ public class OutputSettings {
 
 	public static boolean shouldSaveStdLib() {
 		return OutputSettings.saveStdLib;
+	}
+
+	public static boolean shouldSaveConditions() {
+		return OutputSettings.saveConditions;
+	}
+
+	public static void setSaveConditions(boolean saveConditions) {
+		OutputSettings.saveConditions = saveConditions;
 	}
 }

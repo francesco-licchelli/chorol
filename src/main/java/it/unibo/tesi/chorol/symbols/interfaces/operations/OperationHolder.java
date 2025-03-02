@@ -8,33 +8,33 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 
 public class OperationHolder {
-	private final HashMap<String, Operation> requests = new HashMap<>();
+	private final HashMap<String, Operation> operations = new HashMap<>();
 
 	public OperationHolder() {
 	}
 
 	public void add(String operationName, OperationDeclaration operationDeclaration) {
 		if (operationDeclaration instanceof OneWayOperationDeclaration)
-			this.requests.put(operationName, new OneWayOperation((OneWayOperationDeclaration) operationDeclaration));
+			this.operations.put(operationName, new OneWayOperation((OneWayOperationDeclaration) operationDeclaration));
 		else
-			this.requests.put(operationName, new ReqResOperation((RequestResponseOperationDeclaration) operationDeclaration));
+			this.operations.put(operationName, new ReqResOperation((RequestResponseOperationDeclaration) operationDeclaration));
 	}
 
 	public Operation get(String operationName) {
-		return this.requests.get(operationName);
+		return this.operations.get(operationName);
 	}
 
 	public HashMap<String, Operation> get() {
-		return this.requests;
+		return this.operations;
 	}
 
 	@Override
 	public String toString() {
-		return this.requests.entrySet().stream()
+		return this.operations.entrySet().stream()
 				       .map(entry -> {
 					       String key = entry.getKey();
-					       Operation request = entry.getValue();
-					       return String.format("%s: %s", key, request);
+					       Operation operation = entry.getValue();
+					       return String.format("%s: %s", key, operation);
 				       }).collect(Collectors.joining("\n"));
 	}
 

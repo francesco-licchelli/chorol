@@ -1,4 +1,4 @@
-# ChorOl
+# JolieGraph
 
 This Java application generates a graph where each node is labeled with its type. By default, only the main types are
 displayed. If you need to see a more detailed view, including the subtypes of composite types, use the `-T` (or
@@ -7,7 +7,7 @@ displayed. If you need to see a more detailed view, including the subtypes of co
 ## Usage
 
 ```bash
-java -jar Application.jar [options]
+java -jar JolieGraph.jar [options]
 ```
 
 ## Options
@@ -17,8 +17,8 @@ java -jar Application.jar [options]
 
 ## Progress
 
-Done: 71/83
-[█████████████████░░░]
+Done: 74/83
+[██████████████████░░]
 
 | Syntax node                         | Supported |
 |-------------------------------------|-----------|
@@ -33,10 +33,10 @@ Done: 71/83
 | SolicitResponseOperationStatement   | ✅         |
 | IfStatement                         | ✅         |
 | WhileStatement                      | ✅         |
-| NullProcessStatement                | ✅         |
 | ForEachArrayItemStatement           | ✅         |
 | ForStatement                        | ✅         |
 | ForEachSubNodeStatement             | ✅         |
+| NullProcessStatement                | ✅         |
 | SynchronizedStatement               | ✅         |
 | ExitStatement                       | ✅         |
 | Scope                               | ✅         |
@@ -93,14 +93,14 @@ Done: 71/83
 | FreshValueExpressionNode            | ✅         |
 | DocumentationComment                | ✅         |
 | ImportStatement                     | ✅         |
-| LinkInStatement                     | ❌         |
-| LinkOutStatement                    | ❌         |
+| LinkInStatement                     | ✅         |
+| LinkOutStatement                    | ✅         |
+| VariablePathNode                    | ✅         |
 | CompensateStatement                 | ❌         |
 | CorrelationSetInfo                  | ❌         |
 | PointerStatement                    | ❌         |
 | RunStatement                        | ❌         |
 | CurrentHandlerStatement             | ❌         |
-| VariablePathNode                    | ❌         |
 | CourierDefinitionNode               | ❌         |
 | CourierChoiceStatement              | ❌         |
 | NotificationForwardStatement        | ❌         |

@@ -34,7 +34,7 @@ public class Misc {
 		} catch (IOException e) {
 			Misc.logger.warn("Error loading program in: {}", path);
 		} catch (ParserException | URISyntaxException e) {
-			Misc.logger.warn("A {}", e.getMessage());
+			Misc.logger.warn(e.getMessage());
 		}
 		return null;
 	}

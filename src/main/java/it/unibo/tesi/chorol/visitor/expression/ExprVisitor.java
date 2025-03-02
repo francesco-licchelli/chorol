@@ -12,24 +12,15 @@ import java.util.stream.Collectors;
 
 public class ExprVisitor extends ExprVisitorBase {
 
-	/**
-	 * Restituisce un valore numerico che rappresenta la precedenza dell'operatore
-	 * associato al nodo. Numeri maggiori indicano una maggiore forza di legame.
-	 */
-	private int getPrecedence(Object node) {
+	private int getPrecedence(OLSyntaxNode node) {
 		if (node instanceof OrConditionNode) return 1;
 		else if (node instanceof AndConditionNode) return 2;
 		else if (node instanceof CompareConditionNode) return 3;
 		else if (node instanceof SumExpressionNode) return 4;
 		else if (node instanceof ProductExpressionNode) return 5;
-		// Costanti, variabili, ecc. hanno la precedenza massima.
 		return 6;
 	}
 
-	/**
-	 * Visita il nodo figlio e, se la sua precedenza è inferiore a quella del nodo corrente,
-	 * lo racchiude tra parentesi per disambiguare.
-	 */
 	private String visitWithParenthesisIfNeeded(OLSyntaxNode node, int parentPrecedence, Void unused) {
 		String result = node.accept(this, unused);
 		if (this.getPrecedence(node) < parentPrecedence) return "(" + result + ")";
