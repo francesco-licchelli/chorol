@@ -1,20 +1,16 @@
 service Main {
-
   outputPort output{
         oneWay:
-            f1(any)
+            op1( any )
     }
-
     define definition{
-        f1@output(void)
+        op1@output( void )
     }
-
-    define recursiveDefinition{
+    define nestedDefinition{
         definition
-        f1@output(void)
+        op1@output( void )
     }
-
     main {
-        recursiveDefinition
+        nestedDefinition
     }
 }

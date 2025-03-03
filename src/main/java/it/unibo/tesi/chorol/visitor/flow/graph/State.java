@@ -3,7 +3,6 @@ package it.unibo.tesi.chorol.visitor.flow.graph;
 public class State {
 	private static int stateCounter = 0;
 	private final String id;
-	private final boolean marked;
 	private boolean isMain;
 	private String label;
 	private StateType type;
@@ -13,7 +12,6 @@ public class State {
 		this.label = label;
 		this.type = StateType.NORMAL;
 		this.isMain = false;
-		this.marked = false;
 	}
 
 	public static State createState() {

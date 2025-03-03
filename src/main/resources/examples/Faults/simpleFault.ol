@@ -1,11 +1,10 @@
 service Main {
     outputPort output{
         oneWay:
-            f1(void)
+            op( void )
     }
-
     main {
-        install( SampleFault => f1@output(void))
-        throw SampleFault(void)
+        install( SampleFault => op@output( void ) )
+        throw SampleFault( void )
     }
 }

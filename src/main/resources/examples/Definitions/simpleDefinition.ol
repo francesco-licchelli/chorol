@@ -1,14 +1,11 @@
 service Main {
-
   outputPort output{
         oneWay:
-            ow(any)
+            op1( any )
     }
-
     define definition{
-        ow@output(void)
+        op1@output( void )
     }
-
     main {
         definition
     }

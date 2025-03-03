@@ -1,11 +1,11 @@
 service Main{
     outputPort output{
         oneWay:
-            f1(any), f2(any)
+            op( 1 )( any ), op( 2 )( any )
     }
 
     main{
-        f1@output(void)
-        f2@output(void)
+        op( 1 )@output( void )
+        op( 2 )@output( void )
     }
 }

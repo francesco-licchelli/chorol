@@ -3,23 +3,23 @@ service Main{
         location: "socket://localhost:0000"
         protocol: http
         oneWay:
-            iow(any)
+            iow( any )
         requestResponse:
-            irr(any)(any)
+            irr( any )( any )
     }
 
     outputPort output{
         oneWay:
-            oww(any)
+            oww( any )
         requestResponse:
-            orr(any)(any)
+            orr( any )( any )
     }
 
     main{
-        [irr(req)(res){
-            orr@output(void)(void)
+        [irr( req )( res ){
+            orr@output( void )( void )
         }]{
-            oww@output(void)(void)
+            oww@output( void )( void )
             res=4
         }
     }

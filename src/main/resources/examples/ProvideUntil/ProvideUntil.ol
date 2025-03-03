@@ -1,7 +1,7 @@
 service Main {
     inputPort input{
         requestResponse:
-            f1(any)(any), f2(any)(any), f3(any)(any), f4(any)(any)
+            op1( any )( any ), op2( any )( any ), op3( any )( any ), op4( any )( any )
             location: "socket://localhost:8000"
             protocol: http
     }
@@ -9,23 +9,21 @@ service Main {
 
     main {
         provide
-            [ f1( request )( response ) {
+            [ op1( request )( response ) {
                 nullProcess
             }]
 
-            [ f2( request )( response ) {
+            [ op2( request )( response ) {
                 nullProcess
             }]
 
-            [ f3( request )( response ) {
+            [ op3( request )( response ) {
                 nullProcess
             }]
-
-
 
 
         until
-            [ f4( )( ) ]{
+            [ op4( )( ) ]{
                 nullProcess
             }
     }

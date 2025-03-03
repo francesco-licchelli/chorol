@@ -44,9 +44,23 @@ public class PortHolder<T extends PortInfo> {
 								                                                       .map(Map.Entry::getValue).findFirst().orElse(null));
 	}
 
+
+	public Port<T> getPortByOperation(String operationId) {
+		return this.ports.values().stream()
+				       .filter(p -> p.getInterfaceHolder().get().entrySet().stream()
+						                    .flatMap(entry -> entry.getValue().getOperationHolder().get().entrySet().stream())
+						                    .anyMatch(opEntry -> opEntry.getKey().equals(operationId)))
+				       .findFirst().orElseGet(() -> this.ports.values().stream()
+						                                    .filter(p -> p.getOperationHolder().get().entrySet().stream()
+								                                                 .anyMatch(opEntry -> opEntry.getKey().equals(operationId)))
+						                                    .findFirst().orElse(null));
+
+	}
+
 	@Override
 	public String toString() {
 		return this.ports.values().stream().map(Port::toString).collect(Collectors.joining("\n"));
 	}
+
 
 }

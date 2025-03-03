@@ -59,7 +59,8 @@ public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 	}
 
 	public boolean containsInformation() {
-		return this.edgeSet().stream().anyMatch(edge -> !edge.isEpsilon());
+		return this.edgeSet().stream().anyMatch(edge -> !edge.isEpsilon()) ||
+				       this.vertexSet().stream().anyMatch(vertex -> !vertex.getStateType().equals(StateType.NORMAL));
 	}
 
 	public State getStartNode() {
@@ -135,7 +136,7 @@ public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 		int counter = 1;
 		while (!queue.isEmpty()) {
 			State current = queue.poll();
-			if (!current.getStateType().equals(StateType.SERVICE)) current.setLabel(String.valueOf(counter++));
+			current.setLabel(String.valueOf(counter++));
 			this.outgoingEdgesOf(current).forEach(edge -> {
 				State neighbor = this.getEdgeTarget(edge);
 				if (!visited.contains(neighbor)) {

@@ -1,0 +1,17 @@
+    strict digraph G {
+        62 [label = "1"];
+        63 [label = "5"];
+        64 [label = "2"];
+        65 [label = "6"];
+        66 [label = "3"];
+        67 [label = "4"];
+        62 -> 64 [label = "IF[condition1]"];
+        62 -> 66 [label = "ELSE"];
+        63 -> 66 [label = "ELSE"];
+        63 -> 65 [label = "IF[condition0_1_1]"];
+        64 -> 67 [label = "IF#1[condition1_1]"];
+        64 -> 66 [label = "ELSE"];
+        64 -> 63 [label = "IF#2[condition0_1]"];
+        65 -> 66 [label = "Output ONE-WAY\nop2@output\nany"];
+        67 -> 66 [label = "Output ONE-WAY\nop1@output\nany"];
+    }

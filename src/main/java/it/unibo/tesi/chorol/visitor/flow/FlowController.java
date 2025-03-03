@@ -23,17 +23,18 @@ import java.util.Map;
 import static org.jgrapht.nio.DefaultAttribute.createAttribute;
 
 public class FlowController {
+	private final SymbolManager symManager;
 	private final HashMap<Path, FlowGraph> flowGraphs = new HashMap<>();
 
 	public FlowController(Path root, Path output) throws IOException {
-		SymbolManager symManager = new SymbolManager(root);
+		this.symManager = new SymbolManager(root);
 		Files.createDirectories(output);
-		symManager.getServices().forEach((path, serviceNodePair) -> {
+		this.symManager.getServices().forEach((path, serviceNodePair) -> {
 			ServiceNode serviceNode = serviceNodePair.key();
 			String newFileName = path.getFileName().toString().replaceFirst("\\.i?ol$", ".dot");
 			Path newPath = output.resolve(newFileName);
-			FlowVisitor flowVisitor = new FlowVisitor(symManager);
-			FlowGraph fg = flowVisitor.visit(serviceNode, new FlowContext(symManager.getServiceHolder().get(serviceNode.name())));
+			FlowVisitor flowVisitor = new FlowVisitor(this.symManager);
+			FlowGraph fg = flowVisitor.visit(serviceNode, new FlowContext(this.symManager.getServiceHolder().get(serviceNode.name())));
 			if (OutputSettings.shouldSaveStdLib() || serviceNodePair.value())
 				this.flowGraphs.put(newPath, fg);
 		});
@@ -46,9 +47,7 @@ public class FlowController {
 			Map<String, Attribute> map = new LinkedHashMap<>();
 			map.put("label", createAttribute(state.toPrettyString()));
 			switch (state.getStateType()) {
-				case SERVICE:
-					map.put("shape", createAttribute("plaintext"));
-					break;
+				case END:
 				case EXIT:
 					map.put("shape", createAttribute("doublecircle"));
 					break;

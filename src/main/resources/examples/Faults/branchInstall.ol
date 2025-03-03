@@ -1,41 +1,38 @@
 service Main {
-
   outputPort output{
         oneWay:
-            f1(void), f2(void), f3(void), f4(void), f5(void), f6(void), f7(void), f8(void)
+            op1( void ), op2( void ), op3( void ), op4( void ), op5( void ), op6( void ), op7( void ), op8( void )
     }
-
     main {
-        if (condizione1 ){
-            if ( condizione1 ){
-                if (condizione2)
-                    install( SampleFault => f1@output() )
+        if ( condition1 ){
+            if ( condition1_1 ){
+                if ( condition1_1_1 )
+                    install( SampleFault => op1@output() )
                 else
-                    install( SampleFault => f2@output() )
+                    install( SampleFault => op2@output() )
             }
             else{
-                if (condizione3)
-                    install( SampleFault => f3@output() )
+                if ( condition1_0_1 )
+                    install( SampleFault => op3@output() )
                 else
-                    install( SampleFault => f4@output() )
+                    install( SampleFault => op4@output() )
             }
         }
         else {
-            if ( condizione4 ){
-                if (condizione5)
-                    install( SampleFault => f5@output() )
+            if ( condition0_1 ){
+                if ( condition0_1_1 )
+                    install( SampleFault => op5@output() )
                 else
-                    install( SampleFault => f6@output() )
+                    install( SampleFault => op6@output() )
             }
             else{
-                if (condizione6)
-                    install( SampleFault => f7@output() )
+                if ( condition0_0_1 )
+                    install( SampleFault => op7@output() )
                 else
-                    install( SampleFault => f8@output() )
+                    install( SampleFault => op8@output() )
             }
         }
 
-        throw SampleFault(void)
-        f8@output()
+        throw SampleFault( void )
     }
 }

@@ -14,7 +14,6 @@ import jolie.lang.parse.ast.*;
 import jolie.lang.parse.ast.expression.OrConditionNode;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -31,7 +30,6 @@ public class FlowVisitor extends FlowVisitorBase {
 	public FlowGraph visit(ServiceNode serviceNode, FlowContext flowContext) {
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState());
-		result.getStartNode().setStateType(StateType.SERVICE);
 
 		serviceNode.program().children().stream()
 				.filter(DefinitionNode.class::isInstance)
@@ -52,6 +50,11 @@ public class FlowVisitor extends FlowVisitorBase {
 		Constants.ExecutionMode executionMode = this.symbolManager.getServiceHolder().get(serviceNode.name()).getExecutionMode();
 		switch (executionMode) {
 			case SINGLE:
+				GraphUtils.clearGraph(result, executionMode);
+				//oppure devo mettere quei nodi con input solo di stessi
+				result.vertexSet().stream()
+						.filter(state -> result.outgoingEdgesOf(state).isEmpty())
+						.forEach(state -> state.setStateType(StateType.EXIT));
 				break;
 			case CONCURRENT:
 			case SEQUENTIAL:
@@ -60,9 +63,12 @@ public class FlowVisitor extends FlowVisitorBase {
 				result.vertexSet().stream()
 						.filter(state -> state.getStateType().equals(StateType.END))
 						.forEach(state -> result.addEdge(state, main));
+				GraphUtils.clearGraph(result, executionMode);
+				result.vertexSet().stream()
+						.filter(state -> state.getStateType().equals(StateType.END))
+						.forEach(state -> state.setStateType(StateType.NORMAL));
 				break;
 		}
-		GraphUtils.clearGraph(result, executionMode);
 		result.relabelNodesBFS();
 		return result;
 	}
@@ -89,10 +95,14 @@ public class FlowVisitor extends FlowVisitorBase {
 		FlowGraph result = new FlowGraph();
 		result.setStartNode(State.createState());
 		result.setEndNode(result.getStartNode());
-		sequenceStatement.children().stream()
-				.map(child -> child.accept(this, flowContext))
-				.filter(Objects::nonNull)
-				.forEach(result::joinAfter);
+		for (OLSyntaxNode child : sequenceStatement.children()) {
+			FlowGraph childResult = child.accept(this, flowContext);
+			if (childResult != null) {
+				result.joinAfter(childResult);
+				if (result.getEndNode().getStateType().equals(StateType.EXIT))
+					break;
+			}
+		}
 		return result.containsInformation() ? result : null;
 	}
 
@@ -159,7 +169,7 @@ public class FlowVisitor extends FlowVisitorBase {
 		AtomicInteger counter = ifStatement.children().size() > 1 ? new AtomicInteger(1) : null;
 
 		ifStatement.children().forEach(entry -> {
-			String label = ((counter != null) ? String.format("IF#%d", counter.getAndIncrement()) : "IF")
+			String label = ((counter != null) ? String.format("IF.%d", counter.getAndIncrement()) : "IF")
 					               + String.format("[%s]",
 					new ExprVisitor().visit((OrConditionNode) entry.key(), null));
 
@@ -183,85 +193,45 @@ public class FlowVisitor extends FlowVisitorBase {
 		return result.containsInformation() ? result : null;
 	}
 
-	@Override
-	public FlowGraph visit(WhileStatement whileStatement, FlowContext flowContext) {
+	private FlowGraph handleLoop(FlowGraph child) {
 		FlowGraph inner = new FlowGraph();
 		inner.setStartNode(State.createState());
 		inner.setEndNode(State.createState());
-		FlowGraph body = whileStatement.body().accept(this, flowContext);
-		inner.joinBetween(body, null);
+
+		inner.joinBetween(child, null);
 		inner.addEdge(inner.getEndNode(), inner.getStartNode());
 
 		FlowGraph result = new FlowGraph();
-		result.setStartNode(inner.getStartNode());
-		result.setEndNode(inner.getEndNode());
+		result.setStartNode(State.createState());
+		result.setEndNode(State.createState());
 		result.joinBetween(inner, null);
 		result.addEdge(result.getStartNode(), result.getEndNode());
-
 		return result;
+	}
+
+	@Override
+	public FlowGraph visit(WhileStatement whileStatement, FlowContext flowContext) {
+		return this.handleLoop(whileStatement.body().accept(this, flowContext));
 	}
 
 	@Override
 	public FlowGraph visit(ForEachArrayItemStatement forEachArrayItemStatement, FlowContext flowContext) {
-		FlowGraph inner = new FlowGraph();
-		inner.setStartNode(State.createState());
-		inner.setEndNode(State.createState());
-		FlowGraph body = forEachArrayItemStatement.body().accept(this, flowContext);
-		inner.joinBetween(body, null);
-		inner.addEdge(inner.getEndNode(), inner.getStartNode());
-
-		FlowGraph result = new FlowGraph();
-		result.setStartNode(inner.getStartNode());
-		result.setEndNode(inner.getEndNode());
-		result.joinBetween(inner, null);
-		result.addEdge(result.getStartNode(), result.getEndNode());
-
-		return result;
+		return this.handleLoop(forEachArrayItemStatement.body().accept(this, flowContext));
 	}
 
 	@Override
 	public FlowGraph visit(ForStatement forStatement, FlowContext flowContext) {
-		FlowGraph inner = new FlowGraph();
-		inner.setStartNode(State.createState());
-		inner.setEndNode(State.createState());
-		FlowGraph body = forStatement.body().accept(this, flowContext);
-		inner.joinBetween(body, null);
-		inner.addEdge(inner.getEndNode(), inner.getStartNode());
-
-		FlowGraph result = new FlowGraph();
-		result.setStartNode(inner.getStartNode());
-		result.setEndNode(inner.getEndNode());
-		result.joinBetween(inner, null);
-		result.addEdge(result.getStartNode(), result.getEndNode());
-
-		return result;
+		return this.handleLoop(forStatement.body().accept(this, flowContext));
 	}
 
 	@Override
 	public FlowGraph visit(ForEachSubNodeStatement forEachSubNodeStatement, FlowContext flowContext) {
-		FlowGraph inner = new FlowGraph();
-		inner.setStartNode(State.createState());
-		inner.setEndNode(State.createState());
-		FlowGraph body = forEachSubNodeStatement.body().accept(this, flowContext);
-		inner.joinBetween(body, null);
-		inner.addEdge(inner.getEndNode(), inner.getStartNode());
-
-		FlowGraph result = new FlowGraph();
-		result.setStartNode(inner.getStartNode());
-		result.setEndNode(inner.getEndNode());
-		result.joinBetween(inner, null);
-		result.addEdge(result.getStartNode(), result.getEndNode());
-
-		return result;
+		return this.handleLoop(forEachSubNodeStatement.body().accept(this, flowContext));
 	}
 
 	@Override
 	public FlowGraph visit(NullProcessStatement nullProcessStatement, FlowContext flowContext) {
-		FlowGraph result = new FlowGraph();
-		State startNode = State.createState();
-		startNode.setStateType(StateType.END);
-		result.setStartNode(startNode);
-		return result;
+		return null;
 	}
 
 
