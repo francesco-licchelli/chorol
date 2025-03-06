@@ -42,9 +42,10 @@ def stampa_tabella_md(risultati):
 def main():
     base_dir = sys.argv[1]
     files = {
-        "FlowVisitor": os.path.join(base_dir, "src", "main", "java", "it", "unibo", "tesi", "chorol", "visitor", "flow",
+        "FlowVisitor": os.path.join(base_dir, "src", "main", "java", "it", "unibo", "tesi", "joliegraph", "visitor",
+                                    "flow",
                                     "FlowVisitor.java"),
-        "FlowVisitorBase": os.path.join(base_dir, "src", "main", "java", "it", "unibo", "tesi", "chorol", "visitor",
+        "FlowVisitorBase": os.path.join(base_dir, "src", "main", "java", "it", "unibo", "tesi", "joliegraph", "visitor",
                                         "flow", "FlowVisitorBase.java")
     }
     risultati = []
