@@ -152,7 +152,7 @@ public class FlowVisitor extends FlowVisitorBase {
 
 	@Override
 	public FlowGraph visit(NotificationOperationStatement notificationOperationStatement, FlowContext flowContext) {
-		String serviceName = notificationOperationStatement.context().enclosingCode().get(0)
+		String serviceName = notificationOperationStatement.context().enclosingCode().get(0).trim()
 				                     .split("@")[1].split("\\(")[0];
 		Port<OutputPortInfo> port = flowContext.service().getOutputPortHolder().get(serviceName); // TODO: alias?
 		OneWayOperation op = (OneWayOperation) port.getOperation(notificationOperationStatement.id());
@@ -161,10 +161,9 @@ public class FlowVisitor extends FlowVisitorBase {
 
 	@Override
 	public FlowGraph visit(SolicitResponseOperationStatement solicitResponseOperationStatement, FlowContext flowContext) {
-		String serviceName = solicitResponseOperationStatement.context().enclosingCode().get(0)
+		String serviceName = solicitResponseOperationStatement.context().enclosingCode().get(0).trim()
 				                     .split("@")[1].split("\\(")[0];
 		Port<OutputPortInfo> port = flowContext.service().getOutputPortHolder().get(serviceName); //TODO alias?
-		System.out.println(((ReqResOperation) (port.getOperation(solicitResponseOperationStatement.id()))).getResponseType());
 		ReqResOperation op = (ReqResOperation) port.getOperation(solicitResponseOperationStatement.id());
 		return new FlowGraph(port.getName(), false, op, this.symbolManager.getTypeHolder(), null);
 	}
@@ -267,11 +266,9 @@ public class FlowVisitor extends FlowVisitorBase {
 
 	@Override
 	public FlowGraph visit(ThrowStatement throwStatement, FlowContext flowContext) {
-		FlowGraph result = null;
-		if (throwStatement.expression() != null) {
-			result = flowContext.faultManager().getFault(throwStatement.id());
-			if (result == null) result = flowContext.faultManager().getFault("default");
-		}
+		FlowGraph result;
+		result = flowContext.faultManager().getFault(throwStatement.id());
+		if (result == null) result = flowContext.faultManager().getFault("default");
 		return result;
 	}
 
@@ -297,8 +294,6 @@ public class FlowVisitor extends FlowVisitorBase {
 			result.setEndNode(until.getEndNode());
 		} else
 			result.addEdge(result.getStartNode(), result.getEndNode());
-
-
 		return result;
 	}
 }

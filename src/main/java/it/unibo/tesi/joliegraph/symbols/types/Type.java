@@ -33,17 +33,16 @@ public class Type {
 	}
 
 	private String setTypeHelper(TypeDefinition definition) {
-		if (definition instanceof TypeChoiceDefinition choice) {
+		if (definition instanceof TypeChoiceDefinition choice)
 			return String.format("%s | %s", this.setTypeHelper(choice.left()), this.setTypeHelper(choice.right()));
-		} else if (definition instanceof TypeInlineDefinition)
+		else if (definition instanceof TypeInlineDefinition)
 			return ((TypeInlineDefinition) definition).basicType().nativeType().name();
-		else if (definition instanceof TypeDefinitionLink link) {
-			return String.format(
-					"%s -> %s",
-					LINK_TYPE,
-					link.linkedType() != null ? link.linkedType().name() : link.linkedTypeName()
-			);
-		} else
+		else if (definition instanceof TypeDefinitionLink link) return String.format(
+				"%s -> %s",
+				LINK_TYPE,
+				link.linkedType() != null ? link.linkedType().name() : link.linkedTypeName()
+		);
+		else
 			return "";
 	}
 

@@ -32,7 +32,6 @@ public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 		if (op instanceof OneWayOperation)
 			this.addEdge(start, end).setLabel(serviceName, op.getName(), op.getRequestType(), opType + " ONE-WAY");
 		else if (op instanceof ReqResOperation) {
-			System.out.println(((ReqResOperation) op).getResponseType());
 			State middle = createState();
 			this.addVertex(middle);
 			this.addEdge(start, middle).setLabel(

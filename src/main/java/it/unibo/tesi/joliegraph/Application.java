@@ -25,7 +25,6 @@ public class Application {
 		try {
 			cmd = parser.parse(options, args);
 		} catch (ParseException e) {
-			System.out.println(e.getMessage());
 			formatter.printHelp("java -jar JolieGraph.jar", options);
 			System.exit(1);
 			return;
