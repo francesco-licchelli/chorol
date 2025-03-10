@@ -1,7 +1,7 @@
-package it.unibo.tesi.joliegraph.visitor.flow.context;
+package it.unibo.tesi.joliegraph.flow.context;
 
 
-import it.unibo.tesi.joliegraph.visitor.flow.graph.FlowGraph;
+import it.unibo.tesi.joliegraph.flow.graph.FlowGraph;
 
 import java.util.*;
 

@@ -1,4 +1,4 @@
-package it.unibo.tesi.joliegraph.visitor.flow.graph;
+package it.unibo.tesi.joliegraph.flow.graph;
 
 public class State {
 	private static int stateCounter = 0;

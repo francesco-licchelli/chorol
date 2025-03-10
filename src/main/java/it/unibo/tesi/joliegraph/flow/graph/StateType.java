@@ -1,4 +1,4 @@
-package it.unibo.tesi.joliegraph.visitor.flow.graph;
+package it.unibo.tesi.joliegraph.flow.graph;
 
 public enum StateType {
 	NORMAL,

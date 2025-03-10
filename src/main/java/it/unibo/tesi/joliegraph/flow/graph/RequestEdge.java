@@ -1,4 +1,4 @@
-package it.unibo.tesi.joliegraph.visitor.flow.graph;
+package it.unibo.tesi.joliegraph.flow.graph;
 
 import it.unibo.tesi.joliegraph.symbols.types.Type;
 import it.unibo.tesi.joliegraph.utils.OutputSettings;

@@ -1,11 +1,11 @@
-package it.unibo.tesi.joliegraph.visitor.flow;
+package it.unibo.tesi.joliegraph.flow;
 
+import it.unibo.tesi.joliegraph.flow.context.FlowContext;
+import it.unibo.tesi.joliegraph.flow.graph.FlowGraph;
+import it.unibo.tesi.joliegraph.flow.graph.RequestEdge;
+import it.unibo.tesi.joliegraph.flow.graph.State;
 import it.unibo.tesi.joliegraph.symbols.SymbolManager;
 import it.unibo.tesi.joliegraph.utils.OutputSettings;
-import it.unibo.tesi.joliegraph.visitor.flow.context.FlowContext;
-import it.unibo.tesi.joliegraph.visitor.flow.graph.FlowGraph;
-import it.unibo.tesi.joliegraph.visitor.flow.graph.RequestEdge;
-import it.unibo.tesi.joliegraph.visitor.flow.graph.State;
 import jolie.lang.parse.ast.ServiceNode;
 import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.ExportException;

@@ -1,9 +1,9 @@
 package it.unibo.tesi.joliegraph.utils;
 
-import it.unibo.tesi.joliegraph.visitor.flow.graph.FlowGraph;
-import it.unibo.tesi.joliegraph.visitor.flow.graph.RequestEdge;
-import it.unibo.tesi.joliegraph.visitor.flow.graph.State;
-import it.unibo.tesi.joliegraph.visitor.flow.graph.StateType;
+import it.unibo.tesi.joliegraph.flow.graph.FlowGraph;
+import it.unibo.tesi.joliegraph.flow.graph.RequestEdge;
+import it.unibo.tesi.joliegraph.flow.graph.State;
+import it.unibo.tesi.joliegraph.flow.graph.StateType;
 import jolie.lang.Constants;
 
 import java.util.*;

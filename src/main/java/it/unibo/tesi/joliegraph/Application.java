@@ -1,8 +1,8 @@
 package it.unibo.tesi.joliegraph;
 
 
+import it.unibo.tesi.joliegraph.flow.FlowController;
 import it.unibo.tesi.joliegraph.utils.OutputSettings;
-import it.unibo.tesi.joliegraph.visitor.flow.FlowController;
 import jolie.lang.parse.ParserException;
 import jolie.lang.parse.module.ModuleException;
 import org.apache.commons.cli.*;

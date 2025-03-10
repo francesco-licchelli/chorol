@@ -1,4 +1,4 @@
-package it.unibo.tesi.joliegraph.visitor.flow.graph;
+package it.unibo.tesi.joliegraph.flow.graph;
 
 import it.unibo.tesi.joliegraph.symbols.interfaces.operations.OneWayOperation;
 import it.unibo.tesi.joliegraph.symbols.interfaces.operations.Operation;
@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-import static it.unibo.tesi.joliegraph.visitor.flow.graph.State.createState;
+import static it.unibo.tesi.joliegraph.flow.graph.State.createState;
 
 public class FlowGraph extends DefaultDirectedGraph<State, RequestEdge> {
 	private State startNode;

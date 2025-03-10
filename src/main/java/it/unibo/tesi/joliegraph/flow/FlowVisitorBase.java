@@ -1,7 +1,7 @@
-package it.unibo.tesi.joliegraph.visitor.flow;
+package it.unibo.tesi.joliegraph.flow;
 
-import it.unibo.tesi.joliegraph.visitor.flow.context.FlowContext;
-import it.unibo.tesi.joliegraph.visitor.flow.graph.FlowGraph;
+import it.unibo.tesi.joliegraph.flow.context.FlowContext;
+import it.unibo.tesi.joliegraph.flow.graph.FlowGraph;
 import jolie.lang.parse.OLVisitor;
 import jolie.lang.parse.ast.*;
 import jolie.lang.parse.ast.courier.CourierChoiceStatement;

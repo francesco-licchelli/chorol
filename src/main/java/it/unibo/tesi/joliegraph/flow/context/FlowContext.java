@@ -1,4 +1,4 @@
-package it.unibo.tesi.joliegraph.visitor.flow.context;
+package it.unibo.tesi.joliegraph.flow.context;
 
 import it.unibo.tesi.joliegraph.symbols.services.Service;
 
